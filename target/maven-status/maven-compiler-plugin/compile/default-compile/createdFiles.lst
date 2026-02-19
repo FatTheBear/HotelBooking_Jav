@@ -1,8 +1,9 @@
+com\hotel\hotelbooking\controller\DashboardController.class
+com\hotel\hotelbooking\database\DatabaseConnection.class
+com\hotel\hotelbooking\model\Customer.class
+com\hotel\hotelbooking\SecondaryController.class
 com\hotel\hotelbooking\model\Booking.class
 com\hotel\hotelbooking\model\Room.class
 module-info.class
-com\hotel\hotelbooking\database\DatabaseConnection.class
 com\hotel\hotelbooking\App.class
-com\hotel\hotelbooking\model\Customer.class
 com\hotel\hotelbooking\PrimaryController.class
-com\hotel\hotelbooking\SecondaryController.class

@@ -8,17 +8,15 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-/**
- * JavaFX App
- */
 public class App extends Application {
 
     private static Scene scene;
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("primary"), 640, 480);
+        scene = new Scene(loadFXML("dashboard"), 500, 650);
         stage.setScene(scene);
+        stage.setTitle("Hotel Booking System");
         stage.show();
     }
 
@@ -34,5 +32,4 @@ public class App extends Application {
     public static void main(String[] args) {
         launch();
     }
-
 }

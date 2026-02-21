@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700" prefWidth="900" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hotel.hotelbooking.controller.BookingController">
+   <top>
+      <VBox prefHeight="80.0" prefWidth="900.0" spacing="10.0" style="-fx-padding: 15;" BorderPane.alignment="CENTER">
+         <children>
+            <Label text="📝 QUẢN LÝ ĐẶT PHÒNG (Booking Management)" textFill="#1e40af">
+               <font>
+                  <Font name="System Bold" size="20.0" />
+               </font>
+            </Label>
+            <Separator prefWidth="200.0" />
+         </children>
+      </VBox>
+   </top>
+   <center>
+      <VBox prefHeight="500.0" prefWidth="900.0" spacing="15.0" style="-fx-padding: 15;" BorderPane.alignment="CENTER">
+         <children>
+            <!-- Form Tạo Booking Mới -->
+            <TitledPane animated="false" text="➕ Tạo Đặt Phòng Mới" VBox.vgrow="NEVER">
+               <content>
+                  <GridPane hgap="15.0" style="-fx-padding: 10;" vgap="15.0">
+                     <columnConstraints>
+                        <ColumnConstraints halignment="RIGHT" minWidth="150.0" prefWidth="150.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="200.0" />
+                        <ColumnConstraints halignment="RIGHT" minWidth="150.0" prefWidth="150.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="200.0" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                        <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
+                        <!-- Row 1: Khách hàng và Phòng -->
+                        <Label text="Khách Hàng:" />
+                        <ComboBox fx:id="cboCustomer" prefWidth="150.0" />
+                        <Label text="Phòng:" GridPane.columnIndex="2" />
+                        <ComboBox fx:id="cboRoom" prefWidth="150.0" GridPane.columnIndex="3" />
+                        
+                        <!-- Row 2: Check-in và Check-out -->
+                        <Label text="Check-in:" GridPane.rowIndex="1" />
+                        <DatePicker fx:id="dpCheckinDate" prefWidth="150.0" GridPane.rowIndex="1" />
+                        <Label text="Check-out:" GridPane.columnIndex="2" GridPane.rowIndex="1" />
+                        <DatePicker fx:id="dpCheckoutDate" prefWidth="150.0" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                        
+                        <!-- Row 3: Giá phòng và tổng tiền -->
+                        <Label text="Giá Phòng/Đêm:" GridPane.rowIndex="2" />
+                        <Label fx:id="lblRoomPrice" style="-fx-font-weight: bold; -fx-text-fill: #dc2626;" text="0 VND" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                        <Label text="Tổng Tiền:" GridPane.columnIndex="2" GridPane.rowIndex="2" />
+                        <Label fx:id="lblTotalPrice" style="-fx-font-weight: bold; -fx-font-size: 14; -fx-text-fill: #16a34a;" text="0 VND" GridPane.columnIndex="3" GridPane.rowIndex="2" />
+                        
+                        <!-- Row 4: Trạng thái và nút -->
+                        <Label text="Trạng Thái:" GridPane.rowIndex="3" />
+                        <ComboBox fx:id="cboStatus" prefWidth="150.0" GridPane.rowIndex="3" />
+                        <HBox spacing="10.0" GridPane.columnIndex="2" GridPane.columnSpan="2" GridPane.rowIndex="3">
+                           <children>
+                              <Button fx:id="btnCreate" mnemonicParsing="false" onAction="#handleCreateBooking" prefWidth="80.0" style="-fx-font-weight: bold;" text="✅ Tạo" />
+                              <Button fx:id="btnReset" mnemonicParsing="false" onAction="#handleReset" prefWidth="80.0" style="-fx-font-weight: bold;" text="🔄 Reset" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </GridPane>
+               </content>
+            </TitledPane>
+            
+            <!-- Danh sách Booking -->
+            <TitledPane animated="false" text="📋 Danh Sách Đặt Phòng" VBox.vgrow="ALWAYS">
+               <content>
+                  <VBox spacing="10.0" style="-fx-padding: 10;">
+                     <children>
+                        <!-- Filter buttons -->
+                        <HBox spacing="10.0">
+                           <children>
+                              <Button fx:id="btnShowAll" mnemonicParsing="false" onAction="#handleShowAll" style="-fx-font-weight: bold;" text="📌 Tất Cả" />
+                              <Button fx:id="btnShowConfirmed" mnemonicParsing="false" onAction="#handleShowConfirmed" style="-fx-font-weight: bold;" text="✅ Đã Xác Nhận" />
+                              <Button fx:id="btnShowPending" mnemonicParsing="false" onAction="#handleShowPending" style="-fx-font-weight: bold;" text="⏳ Chờ Xác Nhận" />
+                              <Button fx:id="btnShowCancelled" mnemonicParsing="false" onAction="#handleShowCancelled" style="-fx-font-weight: bold;" text="❌ Đã Hủy" />
+                           </children>
+                        </HBox>
+                        
+                        <!-- Table -->
+                        <TableView fx:id="tblBooking" prefHeight="250.0" VBox.vgrow="ALWAYS">
+                           <columns>
+                              <TableColumn fx:id="colBookingId" minWidth="60.0" prefWidth="70.0" text="ID" />
+                              <TableColumn fx:id="colCustomer" minWidth="120.0" prefWidth="150.0" text="Khách Hàng" />
+                              <TableColumn fx:id="colRoom" minWidth="80.0" prefWidth="100.0" text="Phòng" />
+                              <TableColumn fx:id="colCheckin" minWidth="100.0" prefWidth="120.0" text="Check-in" />
+                              <TableColumn fx:id="colCheckout" minWidth="100.0" prefWidth="120.0" text="Check-out" />
+                              <TableColumn fx:id="colTotalPrice" minWidth="100.0" prefWidth="120.0" text="Tổng Tiền" />
+                              <TableColumn fx:id="colStatus" minWidth="100.0" prefWidth="120.0" text="Trạng Thái" />
+                              <TableColumn fx:id="colAction" minWidth="150.0" prefWidth="150.0" text="Thao Tác" />
+                           </columns>
+                        </TableView>
+                     </children>
+                  </VBox>
+               </content>
+            </TitledPane>
+         </children>
+      </VBox>
+   </center>
+   <bottom>
+      <HBox spacing="10.0" style="-fx-padding: 15;" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="btnExportCSV" mnemonicParsing="false" onAction="#handleExportCSV" prefWidth="120.0" style="-fx-font-weight: bold;" text="📥 Xuất CSV" />
+            <Button fx:id="btnRefresh" mnemonicParsing="false" onAction="#handleRefresh" prefWidth="120.0" style="-fx-font-weight: bold;" text="🔄 Làm Mới" />
+            <Separator HBox.hgrow="ALWAYS" />
+            <Button fx:id="btnBack" mnemonicParsing="false" onAction="#handleBack" prefWidth="100.0" style="-fx-font-weight: bold;" text="⬅️ Quay Lại" />
+         </children>
+      </HBox>
+   </bottom>
+</BorderPane>

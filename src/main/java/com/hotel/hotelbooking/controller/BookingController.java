@@ -13,6 +13,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 
@@ -131,12 +132,19 @@ public class BookingController {
         colTotalPrice.setCellValueFactory(cellData -> new javafx.beans.property.SimpleDoubleProperty(cellData.getValue().getTotalPrice()).asObject());
         colStatus.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getStatus()));
         
-        // Action column (Delete only)
+        // Action column (Edit and Delete)
         colAction.setCellFactory(param -> new TableCell<Booking, String>() {
+            private final Button btnEdit = new Button("✏️ Sửa");
             private final Button btnDelete = new Button("🗑️ Xóa");
             
             {
+                btnEdit.setStyle("-fx-padding: 5; -fx-font-size: 11;");
                 btnDelete.setStyle("-fx-padding: 5; -fx-font-size: 11;");
+                
+                btnEdit.setOnAction(e -> {
+                    Booking booking = getTableView().getItems().get(getIndex());
+                    handleEditBooking(booking);
+                });
                 
                 btnDelete.setOnAction(e -> {
                     Booking booking = getTableView().getItems().get(getIndex());
@@ -151,7 +159,7 @@ public class BookingController {
                     setGraphic(null);
                 } else {
                     HBox hBox = new HBox(5);
-                    hBox.getChildren().add(btnDelete);
+                    hBox.getChildren().addAll(btnEdit, btnDelete);
                     setGraphic(hBox);
                 }
             }
@@ -302,6 +310,84 @@ public class BookingController {
     private void showBookingsByStatus(String status) {
         List<Booking> bookings = BookingDAO.getBookingsByStatus(status);
         tblBooking.setItems(FXCollections.observableArrayList(bookings));
+    }
+    
+    /**
+     * Sửa booking
+     */
+    private void handleEditBooking(Booking booking) {
+        try {
+            // Create dialog
+            Dialog<Boolean> dialog = new Dialog<>();
+            dialog.setTitle("✏️ Sửa Đặt Phòng");
+            dialog.setHeaderText("Chỉnh sửa thông tin booking #" + booking.getBookingId());
+            
+            // Create grid
+            GridPane grid = new GridPane();
+            grid.setHgap(10);
+            grid.setVgap(10);
+            grid.setPadding(new javafx.geometry.Insets(10));
+            
+            // Create controls
+            ComboBox<String> cboEditStatus = new ComboBox<>();
+            cboEditStatus.setItems(FXCollections.observableArrayList("Pending", "Confirmed", "Cancelled"));
+            cboEditStatus.setValue(booking.getStatus());
+            
+            DatePicker dpEditCheckin = new DatePicker();
+            dpEditCheckin.setValue(booking.getCheckinDate());
+            
+            DatePicker dpEditCheckout = new DatePicker();
+            dpEditCheckout.setValue(booking.getCheckoutDate());
+            
+            Label lblCustomer = new Label(booking.getCustomerName());
+            Label lblRoom = new Label(booking.getRoomNumber());
+            Label lblPrice = new Label(String.format("%.0f VND", booking.getTotalPrice()));
+            
+            // Add to grid
+            grid.add(new Label("Khách Hàng:"), 0, 0);
+            grid.add(lblCustomer, 1, 0);
+            
+            grid.add(new Label("Phòng:"), 0, 1);
+            grid.add(lblRoom, 1, 1);
+            
+            grid.add(new Label("Check-in:"), 0, 2);
+            grid.add(dpEditCheckin, 1, 2);
+            
+            grid.add(new Label("Check-out:"), 0, 3);
+            grid.add(dpEditCheckout, 1, 3);
+            
+            grid.add(new Label("Tổng Tiền:"), 0, 4);
+            grid.add(lblPrice, 1, 4);
+            
+            grid.add(new Label("Trạng Thái:"), 0, 5);
+            grid.add(cboEditStatus, 1, 5);
+            
+            dialog.getDialogPane().setContent(grid);
+            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+            
+            // Handle OK
+            dialog.setResultConverter(buttonType -> {
+                if (buttonType == ButtonType.OK) {
+                    booking.setCheckinDate(dpEditCheckin.getValue());
+                    booking.setCheckoutDate(dpEditCheckout.getValue());
+                    booking.setStatus(cboEditStatus.getValue());
+                    return true;
+                }
+                return false;
+            });
+            
+            if (dialog.showAndWait().orElse(false)) {
+                if (BookingDAO.updateBooking(booking)) {
+                    showAlert(Alert.AlertType.INFORMATION, "✅ Thành công", "Cập nhật booking thành công!");
+                    loadBookings();
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Không thể cập nhật booking!");
+                }
+            }
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Lỗi: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**

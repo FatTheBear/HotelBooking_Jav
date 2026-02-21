@@ -97,7 +97,7 @@
                               <TableColumn fx:id="colCheckout" minWidth="100.0" prefWidth="120.0" text="Check-out" />
                               <TableColumn fx:id="colTotalPrice" minWidth="100.0" prefWidth="120.0" text="Tổng Tiền" />
                               <TableColumn fx:id="colStatus" minWidth="100.0" prefWidth="120.0" text="Trạng Thái" />
-                              <TableColumn fx:id="colAction" minWidth="150.0" prefWidth="150.0" text="Thao Tác" />
+                              <TableColumn fx:id="colAction" minWidth="200.0" prefWidth="200.0" text="Thao Tác" />
                            </columns>
                         </TableView>
                      </children>

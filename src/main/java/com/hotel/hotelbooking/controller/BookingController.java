@@ -456,7 +456,10 @@ public class BookingController {
      * Export bookings to CSV file
      */
     private void exportBookingsToCSV(java.io.File file) {
-        try (FileWriter writer = new FileWriter(file)) {
+        try (FileWriter writer = new FileWriter(file, java.nio.charset.StandardCharsets.UTF_8)) {
+            // Write BOM for Excel to recognize UTF-8
+            writer.write('\ufeff');
+            
             // Write header
             writer.write("Booking ID,Khách Hàng,Phòng,Check-in,Check-out,Tổng Tiền,Trạng Thái\n");
             

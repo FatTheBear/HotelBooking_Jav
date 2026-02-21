@@ -132,6 +132,19 @@ public class BookingController {
         colTotalPrice.setCellValueFactory(cellData -> new javafx.beans.property.SimpleDoubleProperty(cellData.getValue().getTotalPrice()).asObject());
         colStatus.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getStatus()));
         
+        // Format currency for TotalPrice column
+        colTotalPrice.setCellFactory(col -> new TableCell<Booking, Double>() {
+            @Override
+            protected void updateItem(Double item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.0f VND", item));
+                }
+            }
+        });
+        
         // Action column (Edit and Delete)
         colAction.setCellFactory(param -> new TableCell<Booking, String>() {
             private final Button btnEdit = new Button("✏️ Sửa");
@@ -167,6 +180,13 @@ public class BookingController {
     }
     
     /**
+     * Format currency with thousand separator
+     */
+    private String formatCurrency(double amount) {
+        return String.format("%,.0f VND", amount);
+    }
+    
+    /**
      * Tính tổng tiền dựa trên số đêm và giá phòng
      */
     private void calculateTotalPrice() {
@@ -184,8 +204,8 @@ public class BookingController {
                 long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
                 double totalPrice = room.getPrice() * nights;
                 
-                lblRoomPrice.setText(String.format("%.0f VND", room.getPrice()));
-                lblTotalPrice.setText(String.format("%.0f VND", totalPrice));
+                lblRoomPrice.setText(formatCurrency(room.getPrice()));
+                lblTotalPrice.setText(formatCurrency(totalPrice));
             }
         } catch (Exception e) {
             lblTotalPrice.setText("0 VND");
@@ -196,7 +216,7 @@ public class BookingController {
      * Lấy tổng tiền từ label (đã tính sẵn)
      */
     private double getTotalPriceFromLabel() {
-        String text = lblTotalPrice.getText().replace(" VND", "").trim();
+        String text = lblTotalPrice.getText().replace(" VND", "").replace(",", "").trim();
         try {
             return Double.parseDouble(text);
         } catch (Exception e) {
@@ -341,7 +361,7 @@ public class BookingController {
             
             Label lblCustomer = new Label(booking.getCustomerName());
             Label lblRoom = new Label(booking.getRoomNumber());
-            Label lblPrice = new Label(String.format("%.0f VND", booking.getTotalPrice()));
+            Label lblPrice = new Label(formatCurrency(booking.getTotalPrice()));
             
             // Add to grid
             grid.add(new Label("Khách Hàng:"), 0, 0);

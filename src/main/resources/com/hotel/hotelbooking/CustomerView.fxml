@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.hotel.hotelbooking.controller.CustomerController">
+
+    <!-- ===== TITLE ===== -->
+    <top>
+        <Label text="CUSTOMER MANAGEMENT"
+               style="-fx-font-size: 20px; -fx-font-weight: bold;"
+               BorderPane.alignment="CENTER"/>
+    </top>
+
+    <!-- ===== CONTENT ===== -->
+    <center>
+        <VBox spacing="15">
+
+            <!-- Padding đúng chuẩn -->
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <!-- ===== FORM ===== -->
+            <GridPane hgap="10" vgap="10">
+
+                <Label text="Full Name:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtName" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                <Label text="Phone:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtPhone" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                <Label text="Email:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtEmail" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                <Label text="ID Card:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtIdCard" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+            </GridPane>
+
+            <!-- ===== BUTTONS ===== -->
+            <HBox spacing="10">
+                <Button text="Add" onAction="#handleAdd"/>
+                <Button text="Update" onAction="#handleUpdate"/>
+                <Button text="Delete" onAction="#handleDelete"/>
+                <Button text="Clear" onAction="#handleClear"/>
+            </HBox>
+
+            <!-- ===== TABLE ===== -->
+            <TableView fx:id="tableView" prefHeight="300">
+
+                <columns>
+                    <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
+                    <TableColumn fx:id="colName" text="Full Name" prefWidth="160"/>
+                    <TableColumn fx:id="colPhone" text="Phone" prefWidth="120"/>
+                    <TableColumn fx:id="colEmail" text="Email" prefWidth="180"/>
+                    <TableColumn fx:id="colIdCard" text="ID Card" prefWidth="120"/>
+                </columns>
+
+            </TableView>
+
+        </VBox>
+    </center>
+
+</BorderPane>

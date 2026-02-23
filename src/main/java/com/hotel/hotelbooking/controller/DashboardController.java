@@ -53,7 +53,12 @@ public class DashboardController {
 
     @FXML
     private void handleBookings(ActionEvent event) {
-        showAlert("Bookings Management", "Booking management feature coming soon!\n(Will be implemented by Thuan)");
+        try {
+            com.hotel.hotelbooking.App.setRoot("booking");
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            showAlert("Error", "Failed to open Bookings module: " + e.getMessage());
+        }
     }
     
     @FXML

@@ -3,17 +3,16 @@ package com.hotel.hotelbooking.controller;
 import com.hotel.hotelbooking.App;
 import com.hotel.hotelbooking.database.BookingDAO;
 import com.hotel.hotelbooking.database.CustomerDAO;
-import com.hotel.hotelbooking.database.RoomDAO;
 import com.hotel.hotelbooking.model.Booking;
 import com.hotel.hotelbooking.model.Customer;
 import com.hotel.hotelbooking.model.Room;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.scene.input.MouseEvent;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
 
@@ -22,71 +21,82 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 public class BookingController {
-    
+
+    // ─── Form Fields ─────────────────────────────────────────────────────────────
     @FXML private ComboBox<Customer> cboCustomer;
-    @FXML private ComboBox<Room> cboRoom;
-    @FXML private DatePicker dpCheckinDate;
-    @FXML private DatePicker dpCheckoutDate;
-    @FXML private ComboBox<String> cboStatus;
-    @FXML private Label lblRoomPrice;
-    @FXML private Label lblTotalPrice;
-    
-    @FXML private Button btnCreate;
-    @FXML private Button btnReset;
+    @FXML private ComboBox<Room>     cboRoom;
+    @FXML private DatePicker         dpCheckinDate;
+    @FXML private DatePicker         dpCheckoutDate;
+    @FXML private ComboBox<String>   cboStatus;
+    @FXML private Label              lblRoomPrice;
+    @FXML private Label              lblTotalPrice;
+    @FXML private Label              lblDateWarning;   // inline warning label
+
+    // ─── Form Buttons ─────────────────────────────────────────────────────────────
+    @FXML private Button btnSave;       // Create or Update
+    @FXML private Button btnDelete;     // Delete selected booking
+    @FXML private Button btnReset;      // Clear / new form
+    @FXML private Button btnExportCSV;
+    @FXML private Button btnBack;
+
+    // ─── Filter Buttons ───────────────────────────────────────────────────────────
     @FXML private Button btnShowAll;
     @FXML private Button btnShowConfirmed;
     @FXML private Button btnShowPending;
     @FXML private Button btnShowCancelled;
-    @FXML private Button btnExportCSV;
-    @FXML private Button btnRefresh;
-    @FXML private Button btnBack;
-    
-    @FXML private TableView<Booking> tblBooking;
-    @FXML private TableColumn<Booking, Integer> colBookingId;
-    @FXML private TableColumn<Booking, String> colCustomer;
-    @FXML private TableColumn<Booking, String> colRoom;
+
+    // ─── Table ────────────────────────────────────────────────────────────────────
+    @FXML private TableView<Booking>              tblBooking;
+    @FXML private TableColumn<Booking, Integer>   colBookingId;
+    @FXML private TableColumn<Booking, String>    colCustomer;
+    @FXML private TableColumn<Booking, String>    colRoom;
     @FXML private TableColumn<Booking, LocalDate> colCheckin;
     @FXML private TableColumn<Booking, LocalDate> colCheckout;
-    @FXML private TableColumn<Booking, Double> colTotalPrice;
-    @FXML private TableColumn<Booking, String> colStatus;
-    @FXML private TableColumn<Booking, String> colAction;
-    
+    @FXML private TableColumn<Booking, Double>    colTotalPrice;
+    @FXML private TableColumn<Booking, String>    colStatus;
+
+    // ─── State ────────────────────────────────────────────────────────────────────
     private ObservableList<Booking> bookingList;
-    
+    /** The booking currently loaded into the form (null = new booking mode). */
+    private Booking selectedBooking = null;
+    /** Whether the form has unsaved changes relative to the last loaded/saved state. */
+    private boolean isDirty = false;
+    /** Suppresses dirty-marking while the form is being programmatically populated. */
+    private boolean isLoading = false;
+    /** Suppresses the selection listener during programmatic selection revert. */
+    private boolean isRevertingSelection = false;
+
+    // ─── Initialization ──────────────────────────────────────────────────────────
+
     @FXML
     public void initialize() {
-        // Setup ComboBox cho Status
-        cboStatus.setItems(FXCollections.observableArrayList(
-            "Pending", "Confirmed", "Cancelled"
-        ));
-        cboStatus.setValue("Pending");
-        
-        // Initialize DatePickers with today's date
-        dpCheckinDate.setValue(LocalDate.now());
-        dpCheckoutDate.setValue(LocalDate.now().plusDays(1));
-        
-        // Load dữ liệu từ database
-        loadCustomers();
-        loadRooms();
-        loadBookings();
-        
-        // Setup Table Columns
-        setupTableColumns();
-        
-        // Add listeners
-        cboRoom.setOnAction(e -> calculateTotalPrice());
-        dpCheckinDate.setOnAction(e -> calculateTotalPrice());
-        dpCheckoutDate.setOnAction(e -> calculateTotalPrice());
-        
-        // Calculate initial price
-        calculateTotalPrice();
+        isLoading = true;
+        try {
+            cboStatus.setItems(FXCollections.observableArrayList("Pending", "Confirmed", "Cancelled"));
+            cboStatus.setValue("Pending");
+
+            dpCheckinDate.setValue(LocalDate.now());
+            dpCheckoutDate.setValue(LocalDate.now().plusDays(1));
+
+            loadCustomers();
+            loadRooms(dpCheckinDate.getValue(), dpCheckoutDate.getValue());
+            loadBookings();
+            setupTableColumns();
+            setupTableSelection();
+            setupDirtyListeners();
+
+            calculateTotalPrice();
+            btnDelete.setDisable(true);
+        } finally {
+            isLoading = false;
+        }
     }
-    
-    /**
-     * Load danh sách khách hàng từ database
-     */
+
+    // ─── Data Loading ─────────────────────────────────────────────────────────────
+
     private void loadCustomers() {
         List<Customer> customers = CustomerDAO.getAllCustomers();
         cboCustomer.setItems(FXCollections.observableArrayList(customers));
@@ -94,413 +104,427 @@ public class BookingController {
             cboCustomer.setValue(customers.get(0));
         }
     }
-    
+
     /**
-     * Load danh sách phòng từ database
+     * Load rooms available for the given date range.
+     * - In UPDATE mode: uses the overloaded method that excludes the current booking,
+     *   so the room already assigned to this booking remains selectable.
+     * - In CREATE mode: uses the standard method.
+     * - Falls back to all available rooms if dates are invalid.
      */
-    private void loadRooms() {
-        List<Room> rooms = RoomDAO.getAvailableRooms();
+    private void loadRooms(LocalDate checkIn, LocalDate checkOut) {
+        List<Room> rooms;
+        if (checkIn != null && checkOut != null && checkOut.isAfter(checkIn)) {
+            if (selectedBooking != null) {
+                // Update mode: exclude the current booking from conflict check
+                rooms = BookingDAO.getAvailableRoomsForDates(checkIn, checkOut, selectedBooking.getBookingId());
+            } else {
+                // Create mode: standard check
+                rooms = BookingDAO.getAvailableRoomsForDates(checkIn, checkOut);
+            }
+        } else {
+            rooms = com.hotel.hotelbooking.database.RoomDAO.getAvailableRooms();
+        }
+        Room current = cboRoom.getValue();
         cboRoom.setItems(FXCollections.observableArrayList(rooms));
-        if (!rooms.isEmpty()) {
+        // Restore selection if still available
+        if (current != null && rooms.contains(current)) {
+            cboRoom.setValue(current);
+        } else if (!rooms.isEmpty()) {
             cboRoom.setValue(rooms.get(0));
         }
     }
-    
-    /**
-     * Load danh sách booking từ database
-     */
+
     private void loadBookings() {
-        try {
-            List<Booking> bookings = BookingDAO.getAllBookings();
-            bookingList = FXCollections.observableArrayList(bookings);
-            tblBooking.setItems(bookingList);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        List<Booking> bookings = BookingDAO.getAllBookings();
+        bookingList = FXCollections.observableArrayList(bookings);
+        tblBooking.setItems(bookingList);
     }
-    
-    /**
-     * Setup các cột của Table
-     */
+
+    // ─── Table Setup ─────────────────────────────────────────────────────────────
+
     private void setupTableColumns() {
-        // Use lambda expressions instead of PropertyValueFactory to bypass module access issues
-        colBookingId.setCellValueFactory(cellData -> new javafx.beans.property.SimpleIntegerProperty(cellData.getValue().getBookingId()).asObject());
-        colCustomer.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getCustomerName()));
-        colRoom.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getRoomNumber()));
-        colCheckin.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getCheckinDate()));
-        colCheckout.setCellValueFactory(cellData -> new javafx.beans.property.SimpleObjectProperty<>(cellData.getValue().getCheckoutDate()));
-        colTotalPrice.setCellValueFactory(cellData -> new javafx.beans.property.SimpleDoubleProperty(cellData.getValue().getTotalPrice()).asObject());
-        colStatus.setCellValueFactory(cellData -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getStatus()));
-        
-        // Format currency for TotalPrice column
+        colBookingId.setCellValueFactory(cd ->
+            new javafx.beans.property.SimpleIntegerProperty(cd.getValue().getBookingId()).asObject());
+        colCustomer.setCellValueFactory(cd ->
+            new javafx.beans.property.SimpleStringProperty(cd.getValue().getCustomerName()));
+        colRoom.setCellValueFactory(cd ->
+            new javafx.beans.property.SimpleStringProperty(cd.getValue().getRoomNumber()));
+        colCheckin.setCellValueFactory(cd ->
+            new javafx.beans.property.SimpleObjectProperty<>(cd.getValue().getCheckinDate()));
+        colCheckout.setCellValueFactory(cd ->
+            new javafx.beans.property.SimpleObjectProperty<>(cd.getValue().getCheckoutDate()));
+        colTotalPrice.setCellValueFactory(cd ->
+            new javafx.beans.property.SimpleDoubleProperty(cd.getValue().getTotalPrice()).asObject());
+        colStatus.setCellValueFactory(cd ->
+            new javafx.beans.property.SimpleStringProperty(cd.getValue().getStatus()));
+
+        // Format currency
         colTotalPrice.setCellFactory(col -> new TableCell<Booking, Double>() {
             @Override
             protected void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(String.format("%,.0f VND", item));
-                }
+                setText((empty || item == null) ? null : formatCurrency(item));
             }
         });
-        
-        // Action column (Edit and Delete)
-        colAction.setCellFactory(param -> new TableCell<Booking, String>() {
-            private final Button btnEdit = new Button("✏️ Sửa");
-            private final Button btnDelete = new Button("🗑️ Xóa");
-            
-            {
-                btnEdit.setStyle("-fx-padding: 5; -fx-font-size: 11;");
-                btnDelete.setStyle("-fx-padding: 5; -fx-font-size: 11;");
-                
-                btnEdit.setOnAction(e -> {
-                    Booking booking = getTableView().getItems().get(getIndex());
-                    handleEditBooking(booking);
-                });
-                
-                btnDelete.setOnAction(e -> {
-                    Booking booking = getTableView().getItems().get(getIndex());
-                    handleDeleteBooking(booking);
-                });
-            }
-            
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty) {
-                    setGraphic(null);
-                } else {
-                    HBox hBox = new HBox(5);
-                    hBox.getChildren().addAll(btnEdit, btnDelete);
-                    setGraphic(hBox);
-                }
-            }
-        });
+
     }
-    
+
     /**
-     * Format currency with thousand separator
+     * When a row is selected, load its data into the form.
+     * If the form is dirty, ask the user first.
+     * - "Keep Editing"   → revert table highlight to the previously selected row (via Platform.runLater
+     *                       so the listener has already returned before the selection change fires).
+     * - "Discard & Load" → load the new row and refresh the table.
      */
-    private String formatCurrency(double amount) {
-        return String.format("%,.0f VND", amount);
-    }
-    
-    /**
-     * Tính tổng tiền dựa trên số đêm và giá phòng
-     */
-    private void calculateTotalPrice() {
-        try {
-            Room room = cboRoom.getValue();
-            LocalDate checkIn = dpCheckinDate.getValue();
-            LocalDate checkOut = dpCheckoutDate.getValue();
-            
-            if (room != null && checkIn != null && checkOut != null) {
-                if (checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
-                    lblTotalPrice.setText("❌ Ngày không hợp lệ");
+    private void setupTableSelection() {
+        tblBooking.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            // Skip if this is a programmatic revert
+            if (isRevertingSelection) return;
+            if (newVal == null) return;
+
+            if (isDirty) {
+                Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+                confirm.setTitle("Unsaved Changes");
+                confirm.setHeaderText("You have unsaved changes.");
+                confirm.setContentText("Do you want to discard changes and load the selected booking?");
+                ButtonType btnDiscard = new ButtonType("Discard & Load");
+                ButtonType btnContinue = new ButtonType("Keep Editing", ButtonBar.ButtonData.CANCEL_CLOSE);
+                confirm.getButtonTypes().setAll(btnDiscard, btnContinue);
+
+                Optional<ButtonType> result = confirm.showAndWait();
+                if (result.isEmpty() || result.get() != btnDiscard) {
+                    // "Keep Editing": revert table highlight to the old row.
+                    // Use Platform.runLater so this listener has fully returned first,
+                    // then use isRevertingSelection to suppress the listener during revert.
+                    final Booking revertTo = oldVal;
+                    Platform.runLater(() -> {
+                        isRevertingSelection = true;
+                        try {
+                            if (revertTo != null) {
+                                tblBooking.getSelectionModel().select(revertTo);
+                            } else {
+                                tblBooking.getSelectionModel().clearSelection();
+                            }
+                        } finally {
+                            isRevertingSelection = false;
+                        }
+                    });
                     return;
                 }
-                
-                long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
-                double totalPrice = room.getPrice() * nights;
-                
-                lblRoomPrice.setText(formatCurrency(room.getPrice()));
-                lblTotalPrice.setText(formatCurrency(totalPrice));
+                // "Discard & Load": refresh the table, then load the fresh version of the new row
+                loadBookings();
+                // Find the refreshed booking object by ID (newVal may be stale after reload)
+                final int targetId = newVal.getBookingId();
+                bookingList.stream()
+                    .filter(b -> b.getBookingId() == targetId)
+                    .findFirst()
+                    .ifPresent(this::loadBookingIntoForm);
+                return;
             }
-        } catch (Exception e) {
-            lblTotalPrice.setText("0 VND");
+
+            loadBookingIntoForm(newVal);
+        });
+    }
+
+    /**
+     * Mark form as dirty whenever any input changes.
+     */
+    private void setupDirtyListeners() {
+        cboCustomer.setOnAction(e -> { markDirty(); calculateTotalPrice(); });
+        cboRoom.setOnAction(e -> { markDirty(); calculateTotalPrice(); });
+        cboStatus.setOnAction(e -> markDirty());
+        dpCheckinDate.setOnAction(e -> {
+            markDirty();
+            loadRooms(dpCheckinDate.getValue(), dpCheckoutDate.getValue());
+            calculateTotalPrice();
+        });
+        dpCheckoutDate.setOnAction(e -> {
+            markDirty();
+            loadRooms(dpCheckinDate.getValue(), dpCheckoutDate.getValue());
+            calculateTotalPrice();
+        });
+    }
+
+    /**
+     * Only marks the form dirty when the user actually changes something,
+     * not when the form is being programmatically populated.
+     */
+    private void markDirty() {
+        if (!isLoading) {
+            isDirty = true;
         }
     }
-    
+
+    // ─── Form Population ─────────────────────────────────────────────────────────
+
     /**
-     * Lấy tổng tiền từ label (đã tính sẵn)
+     * Load a booking's data into the top form for editing.
+     * Uses isLoading flag to prevent dirty-marking during population.
      */
-    private double getTotalPriceFromLabel() {
-        String text = lblTotalPrice.getText().replace(" VND", "").replace(",", "").trim();
+    private void loadBookingIntoForm(Booking booking) {
+        isLoading = true;
         try {
-            return Double.parseDouble(text);
-        } catch (Exception e) {
+            selectedBooking = booking;
+            isDirty = false;
+
+            // Select matching customer
+            cboCustomer.getItems().stream()
+                .filter(c -> c.getCustomerId() == booking.getCustomerId())
+                .findFirst()
+                .ifPresent(cboCustomer::setValue);
+
+            dpCheckinDate.setValue(booking.getCheckinDate());
+            dpCheckoutDate.setValue(booking.getCheckoutDate());
+            cboStatus.setValue(booking.getStatus());
+
+            // Reload rooms for these dates, then select the booked room
+            loadRooms(booking.getCheckinDate(), booking.getCheckoutDate());
+            cboRoom.getItems().stream()
+                .filter(r -> r.getRoomId() == booking.getRoomId())
+                .findFirst()
+                .ifPresentOrElse(
+                    cboRoom::setValue,
+                    () -> {
+                        // Room may be unavailable (booked by others); add it temporarily
+                        Room bookedRoom = com.hotel.hotelbooking.database.RoomDAO.getRoomById(booking.getRoomId());
+                        if (bookedRoom != null) {
+                            cboRoom.getItems().add(0, bookedRoom);
+                            cboRoom.setValue(bookedRoom);
+                        }
+                    }
+                );
+
+            calculateTotalPrice();
+            btnDelete.setDisable(false);
+            btnSave.setText("Update Booking");
+            clearDateWarning();
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    // ─── Price Calculation ───────────────────────────────────────────────────────
+
+    /**
+     * Calculate total price and update UI labels.
+     * @return the calculated total price, or 0 if invalid
+     */
+    private double calculateTotalPrice() {
+        Room room = cboRoom.getValue();
+        LocalDate checkIn = dpCheckinDate.getValue();
+        LocalDate checkOut = dpCheckoutDate.getValue();
+
+        if (room == null || checkIn == null || checkOut == null) {
+            lblRoomPrice.setText("0 VND");
+            lblTotalPrice.setText("0 VND");
             return 0;
         }
+
+        if (!checkOut.isAfter(checkIn)) {
+            showDateWarning("⚠ Check-out date must be after check-in date!");
+            lblTotalPrice.setText("—");
+            return 0;
+        }
+
+        clearDateWarning();
+        long nights = ChronoUnit.DAYS.between(checkIn, checkOut);
+        double total = room.getPrice() * nights;
+        lblRoomPrice.setText(formatCurrency(room.getPrice()));
+        lblTotalPrice.setText(formatCurrency(total));
+        return total;
     }
-    
+
+    private void showDateWarning(String msg) {
+        lblDateWarning.setText(msg);
+        lblDateWarning.setVisible(true);
+    }
+
+    private void clearDateWarning() {
+        lblDateWarning.setText("");
+        lblDateWarning.setVisible(false);
+    }
+
+    // ─── FXML Handlers ───────────────────────────────────────────────────────────
+
     /**
-     * Xử lý tạo booking mới
+     * Save = Create (if no booking selected) or Update (if a booking is loaded).
      */
     @FXML
-    private void handleCreateBooking(ActionEvent event) {
-        try {
-            Customer customer = cboCustomer.getValue();
-            Room room = cboRoom.getValue();
-            LocalDate checkIn = dpCheckinDate.getValue();
-            LocalDate checkOut = dpCheckoutDate.getValue();
-            String status = cboStatus.getValue();
-            
-            // Validation
-            if (customer == null || room == null || checkIn == null || checkOut == null) {
-                showAlert(Alert.AlertType.WARNING, "⚠️ Lỗi", "Vui lòng điền đầy đủ thông tin!");
-                return;
-            }
-            
-            if (checkOut.isBefore(checkIn) || checkOut.isEqual(checkIn)) {
-                showAlert(Alert.AlertType.WARNING, "⚠️ Lỗi", "Ngày checkout phải sau checkin!");
-                return;
-            }
-            
-            // Lấy tổng tiền từ label (đã tính sẵn)
-            double totalPrice = getTotalPriceFromLabel();
-            
-            // Tạo booking mới
-            Booking booking = new Booking(
-                0,
-                customer.getCustomerId(),
-                room.getRoomId(),
-                checkIn,
-                checkOut,
-                totalPrice,
-                status
-            );
-            
+    private void handleSave(ActionEvent event) {
+        Customer customer = cboCustomer.getValue();
+        Room room = cboRoom.getValue();
+        LocalDate checkIn = dpCheckinDate.getValue();
+        LocalDate checkOut = dpCheckoutDate.getValue();
+        String status = cboStatus.getValue();
+
+        if (customer == null || room == null || checkIn == null || checkOut == null) {
+            showAlert(Alert.AlertType.WARNING, "Validation Error", "Please fill in all required fields.");
+            return;
+        }
+        if (!checkOut.isAfter(checkIn)) {
+            showDateWarning("⚠ Check-out date must be after check-in date!");
+            return;
+        }
+
+        double totalPrice = calculateTotalPrice();
+
+        // ── Server-side conflict check (guards against race conditions) ──
+        int excludeId = (selectedBooking != null) ? selectedBooking.getBookingId() : 0;
+        if (BookingDAO.hasConflict(room.getRoomId(), checkIn, checkOut, excludeId)) {
+            showAlert(Alert.AlertType.WARNING, "Room Conflict",
+                "Room " + room.getRoomNumber() + " is already booked for the selected dates.\n" +
+                "Please choose a different room or adjust the dates.");
+            // Refresh room list so the UI reflects the current state
+            loadRooms(checkIn, checkOut);
+            return;
+        }
+
+        if (selectedBooking == null) {
+            // ── CREATE ──
+            Booking booking = new Booking(0, customer.getCustomerId(), room.getRoomId(),
+                checkIn, checkOut, totalPrice, status);
             if (BookingDAO.createBooking(booking)) {
-                showAlert(Alert.AlertType.INFORMATION, "✅ Thành công", "Đặt phòng thành công!");
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Booking created successfully!");
                 handleReset(null);
                 loadBookings();
             } else {
-                showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Không thể tạo booking!");
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to create booking.");
             }
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Lỗi: " + e.getMessage());
-            e.printStackTrace();
+        } else {
+            // ── UPDATE ──
+            selectedBooking.setCustomerId(customer.getCustomerId());
+            selectedBooking.setRoomId(room.getRoomId());
+            selectedBooking.setCheckinDate(checkIn);
+            selectedBooking.setCheckoutDate(checkOut);
+            selectedBooking.setTotalPrice(totalPrice);
+            selectedBooking.setStatus(status);
+
+            if (BookingDAO.updateBooking(selectedBooking)) {
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Booking updated successfully!");
+                isDirty = false;
+                loadBookings();
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to update booking.");
+            }
         }
     }
-    
+
     /**
-     * Reset form
+     * Delete the currently selected booking.
+     */
+    @FXML
+    private void handleDelete(ActionEvent event) {
+        if (selectedBooking == null) {
+            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a booking from the table first.");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Confirm Delete");
+        confirm.setHeaderText("Delete Booking #" + selectedBooking.getBookingId());
+        confirm.setContentText("Are you sure you want to delete this booking? This action cannot be undone.");
+
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            if (BookingDAO.deleteBooking(selectedBooking.getBookingId())) {
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Booking deleted successfully!");
+                handleReset(null);
+                loadBookings();
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete booking.");
+            }
+        }
+    }
+
+    /**
+     * Called when the user clicks on the empty area of the "New / Edit Booking" pane.
+     * Currently disabled - clicking empty area will NOT reset the form.
+     * If you want to enable reset, uncomment the code below.
+     */
+    @FXML
+    private void handlePaneClick(MouseEvent event) {
+        // Click on empty area no longer triggers reset
+        // Uncomment below to re-enable reset functionality:
+        // handleReset(null);
+    }
+
+    /**
+     * Reset form to "new booking" state.
+     * Uses isLoading to suppress dirty-marking during reset.
      */
     @FXML
     private void handleReset(ActionEvent event) {
-        if (!cboCustomer.getItems().isEmpty()) {
-            cboCustomer.setValue(cboCustomer.getItems().get(0));
-        }
-        if (!cboRoom.getItems().isEmpty()) {
-            cboRoom.setValue(cboRoom.getItems().get(0));
-        }
-        dpCheckinDate.setValue(LocalDate.now());
-        dpCheckoutDate.setValue(LocalDate.now().plusDays(1));
-        cboStatus.setValue("Pending");
-        lblRoomPrice.setText("0 VND");
-        lblTotalPrice.setText("0 VND");
-    }
-    
-    /**
-     * Hiển thị tất cả booking
-     */
-    @FXML
-    private void handleShowAll(ActionEvent event) {
-        loadBookings();
-    }
-    
-    /**
-     * Hiển thị booking đã xác nhận
-     */
-    @FXML
-    private void handleShowConfirmed(ActionEvent event) {
-        showBookingsByStatus("Confirmed");
-    }
-    
-    /**
-     * Hiển thị booking chờ xác nhận
-     */
-    @FXML
-    private void handleShowPending(ActionEvent event) {
-        showBookingsByStatus("Pending");
-    }
-    
-    /**
-     * Hiển thị booking đã hủy
-     */
-    @FXML
-    private void handleShowCancelled(ActionEvent event) {
-        showBookingsByStatus("Cancelled");
-    }
-    
-    /**
-     * Helper method - Hiển thị booking theo status
-     */
-    private void showBookingsByStatus(String status) {
-        List<Booking> bookings = BookingDAO.getBookingsByStatus(status);
-        tblBooking.setItems(FXCollections.observableArrayList(bookings));
-    }
-    
-    /**
-     * Sửa booking
-     */
-    private void handleEditBooking(Booking booking) {
+        isLoading = true;
         try {
-            // Create dialog
-            Dialog<Boolean> dialog = new Dialog<>();
-            dialog.setTitle("✏️ Sửa Đặt Phòng");
-            dialog.setHeaderText("Chỉnh sửa thông tin booking #" + booking.getBookingId());
-            
-            // Create grid
-            GridPane grid = new GridPane();
-            grid.setHgap(10);
-            grid.setVgap(10);
-            grid.setPadding(new javafx.geometry.Insets(10));
-            
-            // Create controls
-            ComboBox<String> cboEditStatus = new ComboBox<>();
-            cboEditStatus.setItems(FXCollections.observableArrayList("Pending", "Confirmed", "Cancelled"));
-            cboEditStatus.setValue(booking.getStatus());
-            
-            DatePicker dpEditCheckin = new DatePicker();
-            dpEditCheckin.setValue(booking.getCheckinDate());
-            
-            DatePicker dpEditCheckout = new DatePicker();
-            dpEditCheckout.setValue(booking.getCheckoutDate());
-            
-            Label lblCustomer = new Label(booking.getCustomerName());
-            Label lblRoom = new Label(booking.getRoomNumber());
-            Label lblPrice = new Label(formatCurrency(booking.getTotalPrice()));
-            
-            // Add to grid
-            grid.add(new Label("Khách Hàng:"), 0, 0);
-            grid.add(lblCustomer, 1, 0);
-            
-            grid.add(new Label("Phòng:"), 0, 1);
-            grid.add(lblRoom, 1, 1);
-            
-            grid.add(new Label("Check-in:"), 0, 2);
-            grid.add(dpEditCheckin, 1, 2);
-            
-            grid.add(new Label("Check-out:"), 0, 3);
-            grid.add(dpEditCheckout, 1, 3);
-            
-            grid.add(new Label("Tổng Tiền:"), 0, 4);
-            grid.add(lblPrice, 1, 4);
-            
-            grid.add(new Label("Trạng Thái:"), 0, 5);
-            grid.add(cboEditStatus, 1, 5);
-            
-            dialog.getDialogPane().setContent(grid);
-            dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-            
-            // Handle OK
-            dialog.setResultConverter(buttonType -> {
-                if (buttonType == ButtonType.OK) {
-                    booking.setCheckinDate(dpEditCheckin.getValue());
-                    booking.setCheckoutDate(dpEditCheckout.getValue());
-                    booking.setStatus(cboEditStatus.getValue());
-                    return true;
-                }
-                return false;
-            });
-            
-            if (dialog.showAndWait().orElse(false)) {
-                if (BookingDAO.updateBooking(booking)) {
-                    showAlert(Alert.AlertType.INFORMATION, "✅ Thành công", "Cập nhật booking thành công!");
-                    loadBookings();
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Không thể cập nhật booking!");
-                }
-            }
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Lỗi: " + e.getMessage());
-            e.printStackTrace();
+            selectedBooking = null;
+            isDirty = false;
+
+            if (!cboCustomer.getItems().isEmpty()) cboCustomer.setValue(cboCustomer.getItems().get(0));
+            dpCheckinDate.setValue(LocalDate.now());
+            dpCheckoutDate.setValue(LocalDate.now().plusDays(1));
+            cboStatus.setValue("Pending");
+            clearDateWarning();
+
+            loadRooms(LocalDate.now(), LocalDate.now().plusDays(1));
+            calculateTotalPrice();
+
+            btnDelete.setDisable(true);
+            btnSave.setText("Create Booking");
+            tblBooking.getSelectionModel().clearSelection();
+        } finally {
+            isLoading = false;
         }
     }
-    
-    /**
-     * Xóa booking
-     */
-    private void handleDeleteBooking(Booking booking) {
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Xác nhận");
-        confirm.setHeaderText("Xóa Booking");
-        confirm.setContentText("Bạn có chắc muốn xóa booking này?");
-        
-        if (confirm.showAndWait().get() == ButtonType.OK) {
-            if (BookingDAO.deleteBooking(booking.getBookingId())) {
-                showAlert(Alert.AlertType.INFORMATION, "✅ Thành công", "Xóa booking thành công!");
-                loadBookings();
-            } else {
-                showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Không thể xóa booking!");
-            }
-        }
+
+    // ─── Filter Handlers ─────────────────────────────────────────────────────────
+
+    @FXML private void handleShowAll(ActionEvent event)       { loadBookings(); }
+    @FXML private void handleShowConfirmed(ActionEvent event) { filterByStatus("Confirmed"); }
+    @FXML private void handleShowPending(ActionEvent event)   { filterByStatus("Pending"); }
+    @FXML private void handleShowCancelled(ActionEvent event) { filterByStatus("Cancelled"); }
+
+    private void filterByStatus(String status) {
+        tblBooking.setItems(FXCollections.observableArrayList(BookingDAO.getBookingsByStatus(status)));
     }
-    
-    /**
-     * Xuất danh sách booking ra CSV
-     */
+
+    // ─── Export CSV ──────────────────────────────────────────────────────────────
+
     @FXML
     private void handleExportCSV(ActionEvent event) {
-        try {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Lưu file CSV");
-            fileChooser.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("CSV Files", "*.csv")
-            );
-            
-            java.io.File file = fileChooser.showSaveDialog(null);
-            if (file != null) {
-                exportBookingsToCSV(file);
-                showAlert(Alert.AlertType.INFORMATION, "✅ Thành công", 
-                    "Xuất CSV thành công!\nFile: " + file.getName());
-            }
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "❌ Lỗi", "Lỗi xuất CSV: " + e.getMessage());
-        }
-    }
-    
-    /**
-     * Export bookings to CSV file
-     */
-    private void exportBookingsToCSV(java.io.File file) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Save CSV File");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
+        java.io.File file = fc.showSaveDialog(null);
+        if (file == null) return;
+
         try (FileWriter writer = new FileWriter(file, java.nio.charset.StandardCharsets.UTF_8)) {
-            // Write BOM for Excel to recognize UTF-8
-            writer.write('\ufeff');
-            
-            // Write header
-            writer.write("Booking ID,Khách Hàng,Phòng,Check-in,Check-out,Tổng Tiền,Trạng Thái\n");
-            
-            // Write data
-            List<Booking> bookings = BookingDAO.getAllBookings();
-            for (Booking booking : bookings) {
+            writer.write('\ufeff'); // BOM for Excel
+            writer.write("Booking ID,Customer,Room,Check-in,Check-out,Total Price,Status\n");
+            for (Booking b : BookingDAO.getAllBookings()) {
                 writer.write(String.format("%d,\"%s\",%s,%s,%s,%.0f,%s\n",
-                    booking.getBookingId(),
-                    booking.getCustomerName(),
-                    booking.getRoomNumber(),
-                    booking.getCheckinDate(),
-                    booking.getCheckoutDate(),
-                    booking.getTotalPrice(),
-                    booking.getStatus()
-                ));
+                    b.getBookingId(), b.getCustomerName(), b.getRoomNumber(),
+                    b.getCheckinDate(), b.getCheckoutDate(), b.getTotalPrice(), b.getStatus()));
             }
+            showAlert(Alert.AlertType.INFORMATION, "Export Successful", "CSV saved to: " + file.getName());
         } catch (IOException e) {
-            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Export Error", "Failed to export CSV: " + e.getMessage());
         }
     }
-    
-    /**
-     * Làm mới danh sách
-     */
-    @FXML
-    private void handleRefresh(ActionEvent event) {
-        loadBookings();
-        showAlert(Alert.AlertType.INFORMATION, "✅ Thành công", "Làm mới danh sách thành công!");
-    }
-    
-    /**
-     * Quay lại dashboard
-     */
+
+    // ─── Back ────────────────────────────────────────────────────────────────────
+
     @FXML
     private void handleBack(ActionEvent event) throws IOException {
         App.setRoot("dashboard");
     }
-    
-    /**
-     * Show alert helper
-     */
+
+    // ─── Utilities ───────────────────────────────────────────────────────────────
+
+    private String formatCurrency(double amount) {
+        return String.format("%,.0f VND", amount);
+    }
+
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
         alert.setTitle(title);

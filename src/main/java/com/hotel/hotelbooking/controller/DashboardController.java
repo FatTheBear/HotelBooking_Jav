@@ -2,6 +2,9 @@ package com.hotel.hotelbooking.controller;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -26,11 +29,28 @@ public class DashboardController {
         showAlert("Rooms Management", "Room management feature coming soon!\n(Will be implemented by Hop)");
     }
     
+//    @FXML
+//    private void handleCustomers(ActionEvent event) {
+//        showAlert("Customers Management", "Customer management feature coming soon!\n(Will be implemented by Sang)");
+//    }
     @FXML
     private void handleCustomers(ActionEvent event) {
-        showAlert("Customers Management", "Customer management feature coming soon!\n(Will be implemented by Sang)");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/hotel/hotelbooking/CustomerView.fxml"));
+
+            Parent root = loader.load();
+
+            Stage stage = new Stage();
+            stage.setTitle("Customer Management");
+            stage.setScene(new Scene(root));
+            stage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    
+
     @FXML
     private void handleBookings(ActionEvent event) {
         showAlert("Bookings Management", "Booking management feature coming soon!\n(Will be implemented by Thuan)");
@@ -58,3 +78,4 @@ public class DashboardController {
         alert.showAndWait();
     }
 }
+

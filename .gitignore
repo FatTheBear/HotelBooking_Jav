@@ -1,1 +1,4 @@
 /TestConnection/nbproject/private/
+/target/
+/nbproject/private/
+*.log

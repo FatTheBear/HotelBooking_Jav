@@ -1,4 +1,7 @@
 /TestConnection/nbproject/private/
 /target/
+<<<<<<< HEAD
 /nbproject/private/
 *.log
+=======
+>>>>>>> e932177 (fix dashboard)

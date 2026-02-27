@@ -3,52 +3,63 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox alignment="CENTER" spacing="20.0" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hotel.hotelbooking.controller.DashboardController">
-   <padding>
-      <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
-   </padding>
-   
-   <Label text="HOTEL BOOKING SYSTEM" textFill="#2c3e50">
-      <font>
-         <Font name="System Bold" size="28.0" />
-      </font>
-   </Label>
-   
-   <Label text="Welcome to Hotel Management System" textFill="#7f8c8d">
-      <font>
-         <Font size="14.0" />
-      </font>
-   </Label>
-   
-   <Label text=" " />
-   
-   <Button fx:id="btnRooms" mnemonicParsing="false" onAction="#handleRooms" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #3498db; -fx-text-fill: white; -fx-font-size: 16px; -fx-background-radius: 10;" text="Rooms Management">
-      <font>
-         <Font name="System Bold" size="16.0" />
-      </font>
-   </Button>
-   
-   <Button fx:id="btnCustomers" mnemonicParsing="false" onAction="#handleCustomers" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #2ecc71; -fx-text-fill: white; -fx-font-size: 16px; -fx-background-radius: 10;" text="Customers Management">
-      <font>
-         <Font name="System Bold" size="16.0" />
-      </font>
-   </Button>
-   
-   <Button fx:id="btnBookings" mnemonicParsing="false" onAction="#handleBookings" prefHeight="50.0" prefWidth="300.0" style="-fx-background-color: #e74c3c; -fx-text-fill: white; -fx-font-size: 16px; -fx-background-radius: 10;" text="Bookings Management">
-      <font>
-         <Font name="System Bold" size="16.0" />
-      </font>
-   </Button>
-   
-   <Label text=" " />
-   
-   <Button fx:id="btnExit" mnemonicParsing="false" onAction="#handleExit" prefHeight="40.0" prefWidth="150.0" style="-fx-background-color: #95a5a6; -fx-text-fill: white; -fx-font-size: 14px; -fx-background-radius: 10;" text="Exit">
-      <font>
-         <Font name="System Bold" size="14.0" />
-      </font>
-   </Button>
-   <Button text="CHECK VERSION 123"/>
-</VBox>
+<BorderPane prefHeight="591.0"
+            prefWidth="942.0"
+            stylesheets="@../../../style.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.hotel.hotelbooking.controller.DashboardController">
+
+   <center>
+      <VBox fx:id="contentBox"
+            alignment="TOP_CENTER"
+            spacing="20.0">
+
+         <padding>
+            <Insets top="40.0" right="40.0" bottom="40.0" left="40.0"/>
+         </padding>
+
+         <Label text="HOTEL BOOKING SYSTEM" textFill="#2c3e50">
+            <font>
+               <Font name="System Bold" size="28.0"/>
+            </font>
+         </Label>
+
+         <Label text="Welcome to Hotel Management System" textFill="#7f8c8d">
+            <font>
+               <Font size="14.0"/>
+            </font>
+         </Label>
+
+      </VBox>
+   </center>
+
+   <top>
+      <HBox spacing="20.0"
+            minHeight="60.0"
+            styleClass="header-bar"
+            BorderPane.alignment="CENTER_LEFT">
+
+         <Label text="Hotel Management">
+            <font>
+               <Font name="System Bold" size="18.0"/>
+            </font>
+         </Label>
+
+         <Region HBox.hgrow="ALWAYS"/>
+
+         
+         <Button text="Rooms"/>
+         <Button text="Booking"/>
+         <Button text="Customer"/>
+
+      </HBox>
+   </top>
+
+</BorderPane>

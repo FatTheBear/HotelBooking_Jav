@@ -9,6 +9,13 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+
 
 public class DashboardController {
     
@@ -28,6 +35,14 @@ public class DashboardController {
     private void handleRooms(ActionEvent event) {
         showAlert("Rooms Management", "Room management feature coming soon!\n(Will be implemented by Hop)");
     }
+    @FXML
+    private VBox contentBox;
+
+    @FXML
+    public void initialize() {
+        generateRoomCards();
+    }
+    
     
 //    @FXML
 //    private void handleCustomers(ActionEvent event) {
@@ -82,5 +97,57 @@ public class DashboardController {
         alert.setContentText(message);
         alert.showAndWait();
     }
+    private void generateRoomCards() {
+
+    HBox roomContainer = new HBox(20);
+    roomContainer.setAlignment(Pos.CENTER);
+
+    String[] roomNames = {
+            "Standard Room",
+            "Deluxe Room",
+            "Family Room",
+            "Suite Room"
+    };
+
+    String[] prices = {
+            "$40 / night",
+            "$60 / night",
+            "$85 / night",
+            "$120 / night"
+    };
+
+    for (int i = 0; i < 4; i++) {
+
+        VBox card = new VBox(10);
+        card.setAlignment(Pos.CENTER);
+        card.setStyle(
+                "-fx-background-color: white;" +
+                "-fx-padding: 15;" +
+                "-fx-background-radius: 10;" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);"
+        );
+
+        ImageView imageView = new ImageView(
+                new Image(getClass().getResourceAsStream("/images/room" + (i+1) + ".jpg"))
+        );
+        imageView.setFitWidth(180);
+        imageView.setFitHeight(120);
+        imageView.setPreserveRatio(true);
+
+        Label name = new Label(roomNames[i]);
+        name.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+        Label price = new Label(prices[i]);
+        price.setStyle("-fx-text-fill: #3498db;");
+
+        Button bookBtn = new Button("Book Now");
+        bookBtn.setStyle("-fx-background-color: #3498db; -fx-text-fill: white;");
+
+        card.getChildren().addAll(imageView, name, price, bookBtn);
+        roomContainer.getChildren().add(card);
+    }
+
+    contentBox.getChildren().add(roomContainer);
+}
 }
 

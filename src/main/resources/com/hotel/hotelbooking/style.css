@@ -1,0 +1,35 @@
+/*
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/CascadeStyleSheet.css to edit this template
+*/
+/* 
+    Created on : Feb 27, 2026, 7:20:20 PM
+    Author     : Admin
+*/
+.topbar {
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-spacing: 20;
+    -fx-alignment: center-left;
+}
+
+.topbar .button {
+    -fx-background-color: transparent;
+    -fx-font-size: 14px;
+}
+
+.topbar .button:hover {
+    -fx-text-fill: #3498db;
+}
+.room-card {
+    -fx-background-color: white;
+    -fx-padding: 15;
+    -fx-spacing: 10;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 3);
+}
+
+.room-card:hover {
+    -fx-scale-x: 1.03;
+    -fx-scale-y: 1.03;
+}

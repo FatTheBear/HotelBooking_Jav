@@ -9,13 +9,52 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="591.0"
-            prefWidth="942.0"
-            stylesheets="@../../../style.css"
+<BorderPane prefHeight="591.0" prefWidth="942.0"
             xmlns="http://javafx.com/javafx/25"
             xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.hotel.hotelbooking.controller.DashboardController">
+            fx:controller="com.hotel.hotelbooking.controller.DashboardController"
+            stylesheets="@style.css">
+         <top>
+        <HBox prefHeight="60"
+              alignment="CENTER_LEFT"
+              spacing="20"
+              style="-fx-background-color: #8fb3b6;">
 
+            <padding>
+                <Insets left="20" right="20"/>
+            </padding>
+
+            <!-- Title -->
+            <Label text="HOTEL BOOKING SYSTEM"
+                   style="-fx-font-size: 20px; -fx-font-weight: bold;" />
+
+            <!-- Spacer -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Buttons -->
+            <Button fx:id="btnRooms"
+                    text="Rooms Management"
+                    onAction="#handleRooms"
+                    prefWidth="175"
+                    prefHeight="35"/>
+
+            <Button fx:id="btnCustomers"
+                    text="Customers Management"
+                    onAction="#handleCustomers"
+                    prefWidth="175"
+                    prefHeight="35"/>
+
+            <Button fx:id="btnBookings"
+                    text="Bookings Management"
+                    onAction="#handleBookings"
+                    prefWidth="175"
+                    prefHeight="35"/>
+
+            <!-- Spacer -->
+            <Region HBox.hgrow="ALWAYS"/>
+
+        </HBox>
+    </top>
    <center>
       <VBox fx:id="contentBox"
             alignment="TOP_CENTER"
@@ -40,26 +79,6 @@
       </VBox>
    </center>
 
-   <top>
-      <HBox spacing="20.0"
-            minHeight="60.0"
-            styleClass="header-bar"
-            BorderPane.alignment="CENTER_LEFT">
-
-         <Label text="Hotel Management">
-            <font>
-               <Font name="System Bold" size="18.0"/>
-            </font>
-         </Label>
-
-         <Region HBox.hgrow="ALWAYS"/>
-
-         
-         <Button text="Rooms"/>
-         <Button text="Booking"/>
-         <Button text="Customer"/>
-
-      </HBox>
-   </top>
+   
 
 </BorderPane>

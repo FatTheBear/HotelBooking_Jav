@@ -206,7 +206,7 @@ public class CustomerController {
     private void loadCustomers() {
         try {
             customerList.clear();
-            customerList.addAll(CustomerDAO.getAll());
+            customerList.addAll(CustomerDAO.getAllCustomers());
         } catch (Exception e) {
             e.printStackTrace();
             showError("Error loading customer data!");

@@ -6,6 +6,7 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Button;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.animation.PauseTransition;
@@ -26,8 +27,20 @@ public class ChatBotController {
     
     @FXML
     private ScrollPane scrollPane;
+    
+    @FXML
+    private Button backButton;
 
     private String savedDate = "";
+
+    @FXML
+    private void handleBack() {
+        try {
+            com.hotel.hotelbooking.App.setRoot("dashboard");
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     @FXML
     private void handleSend() {

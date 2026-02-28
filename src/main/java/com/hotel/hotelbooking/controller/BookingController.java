@@ -3,6 +3,7 @@ package com.hotel.hotelbooking.controller;
 import com.hotel.hotelbooking.App;
 import com.hotel.hotelbooking.database.BookingDAO;
 import com.hotel.hotelbooking.database.CustomerDAO;
+import com.hotel.hotelbooking.database.RoomDAO;
 import com.hotel.hotelbooking.model.Booking;
 import com.hotel.hotelbooking.model.Customer;
 import com.hotel.hotelbooking.model.Room;
@@ -25,51 +26,86 @@ import java.util.Optional;
 
 public class BookingController {
 
-    // ─── Form Fields ─────────────────────────────────────────────────────────────
-    @FXML private ComboBox<Customer> cboCustomer;
-    @FXML private ComboBox<Room>     cboRoom;
-    @FXML private DatePicker         dpCheckinDate;
-    @FXML private DatePicker         dpCheckoutDate;
-    @FXML private ComboBox<String>   cboStatus;
-    @FXML private Label              lblRoomPrice;
-    @FXML private Label              lblTotalPrice;
-    @FXML private Label              lblDateWarning;   // inline warning label
+    //Fields
+    @FXML
+    private ComboBox<Customer> cboCustomer;
+    @FXML
+    private ComboBox<Room> cboRoom;
+    @FXML
+    private DatePicker dpCheckinDate;
+    @FXML
+    private DatePicker dpCheckoutDate;
+    @FXML
+    private ComboBox<String> cboStatus;
+    @FXML
+    private Label lblRoomPrice;
+    @FXML
+    private Label lblTotalPrice;
+    @FXML
+    private Label lblDateWarning; // inline warning label
 
-    // ─── Form Buttons ─────────────────────────────────────────────────────────────
-    @FXML private Button btnSave;       // Create or Update
-    @FXML private Button btnDelete;     // Delete selected booking
-    @FXML private Button btnReset;      // Clear / new form
-    @FXML private Button btnExportCSV;
-    @FXML private Button btnBack;
+    // ─── Form Buttons
+    // ─────────────────────────────────────────────────────────────
+    @FXML
+    private Button btnSave; // Create or Update
+    @FXML
+    private Button btnDelete; // Delete selected booking
+    @FXML
+    private Button btnReset; // Clear / new form
+    @FXML
+    private Button btnExportCSV;
+    @FXML
+    private Button btnBack;
 
-    // ─── Filter Buttons ───────────────────────────────────────────────────────────
-    @FXML private Button btnShowAll;
-    @FXML private Button btnShowConfirmed;
-    @FXML private Button btnShowPending;
-    @FXML private Button btnShowCancelled;
+    // ─── Filter Buttons
+    // ───────────────────────────────────────────────────────────
+    @FXML
+    private Button btnShowAll;
+    @FXML
+    private Button btnShowConfirmed;
+    @FXML
+    private Button btnShowPending;
+    @FXML
+    private Button btnShowCancelled;
 
-    // ─── Table ────────────────────────────────────────────────────────────────────
-    @FXML private TableView<Booking>              tblBooking;
-    @FXML private TableColumn<Booking, Integer>   colBookingId;
-    @FXML private TableColumn<Booking, String>    colCustomer;
-    @FXML private TableColumn<Booking, String>    colRoom;
-    @FXML private TableColumn<Booking, LocalDate> colCheckin;
-    @FXML private TableColumn<Booking, LocalDate> colCheckout;
-    @FXML private TableColumn<Booking, Double>    colTotalPrice;
-    @FXML private TableColumn<Booking, String>    colStatus;
+    // ─── Search Fields ───────────────────────────────────────────────────────────
+    @FXML
+    private TextField txtSearchCustomer;
+    @FXML
+    private DatePicker dpSearchCheckin;
+    @FXML
+    private DatePicker dpSearchCheckout;
 
-    // ─── State ────────────────────────────────────────────────────────────────────
+    // ─── Table
+    // ────────────────────────────────────────────────────────────────────
+    @FXML
+    private TableView<Booking> tblBooking;
+    @FXML
+    private TableColumn<Booking, Integer> colBookingId;
+    @FXML
+    private TableColumn<Booking, String> colCustomer;
+    @FXML
+    private TableColumn<Booking, String> colPhone;
+    @FXML
+    private TableColumn<Booking, String> colRoom;
+    @FXML
+    private TableColumn<Booking, LocalDate> colCheckin;
+    @FXML
+    private TableColumn<Booking, LocalDate> colCheckout;
+    @FXML
+    private TableColumn<Booking, Double> colTotalPrice;
+    @FXML
+    private TableColumn<Booking, String> colStatus;
+
     private ObservableList<Booking> bookingList;
-    /** The booking currently loaded into the form (null = new booking mode). */
-    private Booking selectedBooking = null;
-    /** Whether the form has unsaved changes relative to the last loaded/saved state. */
-    private boolean isDirty = false;
-    /** Suppresses dirty-marking while the form is being programmatically populated. */
-    private boolean isLoading = false;
-    /** Suppresses the selection listener during programmatic selection revert. */
-    private boolean isRevertingSelection = false;
 
-    // ─── Initialization ──────────────────────────────────────────────────────────
+    private Booking selectedBooking = null;
+
+    private boolean isDirty = false;
+
+    private boolean isLoading = false;
+
+    private boolean isRevertingSelection = false;
 
     @FXML
     public void initialize() {
@@ -95,7 +131,8 @@ public class BookingController {
         }
     }
 
-    // ─── Data Loading ─────────────────────────────────────────────────────────────
+    // ─── Data Loading
+    // ─────────────────────────────────────────────────────────────
 
     private void loadCustomers() {
         List<Customer> customers = CustomerDAO.getAllCustomers();
@@ -105,13 +142,6 @@ public class BookingController {
         }
     }
 
-    /**
-     * Load rooms available for the given date range.
-     * - In UPDATE mode: uses the overloaded method that excludes the current booking,
-     *   so the room already assigned to this booking remains selectable.
-     * - In CREATE mode: uses the standard method.
-     * - Falls back to all available rooms if dates are invalid.
-     */
     private void loadRooms(LocalDate checkIn, LocalDate checkOut) {
         List<Room> rooms;
         if (checkIn != null && checkOut != null && checkOut.isAfter(checkIn)) {
@@ -144,20 +174,21 @@ public class BookingController {
     // ─── Table Setup ─────────────────────────────────────────────────────────────
 
     private void setupTableColumns() {
-        colBookingId.setCellValueFactory(cd ->
-            new javafx.beans.property.SimpleIntegerProperty(cd.getValue().getBookingId()).asObject());
-        colCustomer.setCellValueFactory(cd ->
-            new javafx.beans.property.SimpleStringProperty(cd.getValue().getCustomerName()));
-        colRoom.setCellValueFactory(cd ->
-            new javafx.beans.property.SimpleStringProperty(cd.getValue().getRoomNumber()));
-        colCheckin.setCellValueFactory(cd ->
-            new javafx.beans.property.SimpleObjectProperty<>(cd.getValue().getCheckinDate()));
-        colCheckout.setCellValueFactory(cd ->
-            new javafx.beans.property.SimpleObjectProperty<>(cd.getValue().getCheckoutDate()));
-        colTotalPrice.setCellValueFactory(cd ->
-            new javafx.beans.property.SimpleDoubleProperty(cd.getValue().getTotalPrice()).asObject());
-        colStatus.setCellValueFactory(cd ->
-            new javafx.beans.property.SimpleStringProperty(cd.getValue().getStatus()));
+        colBookingId.setCellValueFactory(
+                cd -> new javafx.beans.property.SimpleIntegerProperty(cd.getValue().getBookingId()).asObject());
+        colCustomer.setCellValueFactory(
+                cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getCustomerName()));
+        colPhone.setCellValueFactory(
+                cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getCustomerPhone()));
+        colRoom.setCellValueFactory(
+                cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getRoomNumber()));
+        colCheckin.setCellValueFactory(
+                cd -> new javafx.beans.property.SimpleObjectProperty<>(cd.getValue().getCheckinDate()));
+        colCheckout.setCellValueFactory(
+                cd -> new javafx.beans.property.SimpleObjectProperty<>(cd.getValue().getCheckoutDate()));
+        colTotalPrice.setCellValueFactory(
+                cd -> new javafx.beans.property.SimpleDoubleProperty(cd.getValue().getTotalPrice()).asObject());
+        colStatus.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(cd.getValue().getStatus()));
 
         // Format currency
         colTotalPrice.setCellFactory(col -> new TableCell<Booking, Double>() {
@@ -170,20 +201,18 @@ public class BookingController {
 
     }
 
-    /**
-     * When a row is selected, load its data into the form.
-     * If the form is dirty, ask the user first.
-     * - "Keep Editing"   → revert table highlight to the previously selected row (via Platform.runLater
-     *                       so the listener has already returned before the selection change fires).
-     * - "Discard & Load" → load the new row and refresh the table.
-     */
     private void setupTableSelection() {
         tblBooking.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            // Skip if this is a programmatic revert
-            if (isRevertingSelection) return;
-            if (newVal == null) return;
+            if (isRevertingSelection)
+                return;
+            if (isLoading) {
+                isDirty = false;
+                return;
+            }
+            if (newVal == null)
+                return;
 
-            if (isDirty) {
+            if (isDirty && selectedBooking != null) {
                 Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
                 confirm.setTitle("Unsaved Changes");
                 confirm.setHeaderText("You have unsaved changes.");
@@ -194,9 +223,6 @@ public class BookingController {
 
                 Optional<ButtonType> result = confirm.showAndWait();
                 if (result.isEmpty() || result.get() != btnDiscard) {
-                    // "Keep Editing": revert table highlight to the old row.
-                    // Use Platform.runLater so this listener has fully returned first,
-                    // then use isRevertingSelection to suppress the listener during revert.
                     final Booking revertTo = oldVal;
                     Platform.runLater(() -> {
                         isRevertingSelection = true;
@@ -212,14 +238,15 @@ public class BookingController {
                     });
                     return;
                 }
-                // "Discard & Load": refresh the table, then load the fresh version of the new row
+                // "Discard & Load": refresh the table, then load the fresh version of the new
+                // row
                 loadBookings();
                 // Find the refreshed booking object by ID (newVal may be stale after reload)
                 final int targetId = newVal.getBookingId();
                 bookingList.stream()
-                    .filter(b -> b.getBookingId() == targetId)
-                    .findFirst()
-                    .ifPresent(this::loadBookingIntoForm);
+                        .filter(b -> b.getBookingId() == targetId)
+                        .findFirst()
+                        .ifPresent(this::loadBookingIntoForm);
                 return;
             }
 
@@ -227,12 +254,15 @@ public class BookingController {
         });
     }
 
-    /**
-     * Mark form as dirty whenever any input changes.
-     */
     private void setupDirtyListeners() {
-        cboCustomer.setOnAction(e -> { markDirty(); calculateTotalPrice(); });
-        cboRoom.setOnAction(e -> { markDirty(); calculateTotalPrice(); });
+        cboCustomer.setOnAction(e -> {
+            markDirty();
+            calculateTotalPrice();
+        });
+        cboRoom.setOnAction(e -> {
+            markDirty();
+            calculateTotalPrice();
+        });
         cboStatus.setOnAction(e -> markDirty());
         dpCheckinDate.setOnAction(e -> {
             markDirty();
@@ -256,12 +286,6 @@ public class BookingController {
         }
     }
 
-    // ─── Form Population ─────────────────────────────────────────────────────────
-
-    /**
-     * Load a booking's data into the top form for editing.
-     * Uses isLoading flag to prevent dirty-marking during population.
-     */
     private void loadBookingIntoForm(Booking booking) {
         isLoading = true;
         try {
@@ -270,9 +294,9 @@ public class BookingController {
 
             // Select matching customer
             cboCustomer.getItems().stream()
-                .filter(c -> c.getCustomerId() == booking.getCustomerId())
-                .findFirst()
-                .ifPresent(cboCustomer::setValue);
+                    .filter(c -> c.getCustomerId() == booking.getCustomerId())
+                    .findFirst()
+                    .ifPresent(cboCustomer::setValue);
 
             dpCheckinDate.setValue(booking.getCheckinDate());
             dpCheckoutDate.setValue(booking.getCheckoutDate());
@@ -281,19 +305,19 @@ public class BookingController {
             // Reload rooms for these dates, then select the booked room
             loadRooms(booking.getCheckinDate(), booking.getCheckoutDate());
             cboRoom.getItems().stream()
-                .filter(r -> r.getRoomId() == booking.getRoomId())
-                .findFirst()
-                .ifPresentOrElse(
-                    cboRoom::setValue,
-                    () -> {
-                        // Room may be unavailable (booked by others); add it temporarily
-                        Room bookedRoom = com.hotel.hotelbooking.database.RoomDAO.getRoomById(booking.getRoomId());
-                        if (bookedRoom != null) {
-                            cboRoom.getItems().add(0, bookedRoom);
-                            cboRoom.setValue(bookedRoom);
-                        }
-                    }
-                );
+                    .filter(r -> r.getRoomId() == booking.getRoomId())
+                    .findFirst()
+                    .ifPresentOrElse(
+                            cboRoom::setValue,
+                            () -> {
+                                // Room may be unavailable (booked by others); add it temporarily
+                                Room bookedRoom = com.hotel.hotelbooking.database.RoomDAO
+                                        .getRoomById(booking.getRoomId());
+                                if (bookedRoom != null) {
+                                    cboRoom.getItems().add(0, bookedRoom);
+                                    cboRoom.setValue(bookedRoom);
+                                }
+                            });
 
             calculateTotalPrice();
             btnDelete.setDisable(false);
@@ -308,6 +332,7 @@ public class BookingController {
 
     /**
      * Calculate total price and update UI labels.
+     * 
      * @return the calculated total price, or 0 if invalid
      */
     private double calculateTotalPrice() {
@@ -345,11 +370,6 @@ public class BookingController {
         lblDateWarning.setVisible(false);
     }
 
-    // ─── FXML Handlers ───────────────────────────────────────────────────────────
-
-    /**
-     * Save = Create (if no booking selected) or Update (if a booking is loaded).
-     */
     @FXML
     private void handleSave(ActionEvent event) {
         Customer customer = cboCustomer.getValue();
@@ -373,8 +393,8 @@ public class BookingController {
         int excludeId = (selectedBooking != null) ? selectedBooking.getBookingId() : 0;
         if (BookingDAO.hasConflict(room.getRoomId(), checkIn, checkOut, excludeId)) {
             showAlert(Alert.AlertType.WARNING, "Room Conflict",
-                "Room " + room.getRoomNumber() + " is already booked for the selected dates.\n" +
-                "Please choose a different room or adjust the dates.");
+                    "Room " + room.getRoomNumber() + " is already booked for the selected dates.\n" +
+                            "Please choose a different room or adjust the dates.");
             // Refresh room list so the UI reflects the current state
             loadRooms(checkIn, checkOut);
             return;
@@ -383,16 +403,32 @@ public class BookingController {
         if (selectedBooking == null) {
             // ── CREATE ──
             Booking booking = new Booking(0, customer.getCustomerId(), room.getRoomId(),
-                checkIn, checkOut, totalPrice, status);
+                    checkIn, checkOut, totalPrice, status);
             if (BookingDAO.createBooking(booking)) {
+                // Auto-update room status when booking is Confirmed
+                if ("Confirmed".equals(status)) {
+                    RoomDAO.updateRoomStatus(room.getRoomId(), "Occupied");
+                }
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Booking created successfully!");
+                // Clear dirty state and set flags
+                isLoading = true;
+                isDirty = false;
+                selectedBooking = null;
+
                 handleReset(null);
                 loadBookings();
+                // Refresh room list to reflect status changes
+                loadRooms(dpCheckinDate.getValue(), dpCheckoutDate.getValue());
+                isLoading = false;
             } else {
                 showAlert(Alert.AlertType.ERROR, "Error", "Failed to create booking.");
             }
         } else {
             // ── UPDATE ──
+            // Store old room ID and status for status change handling
+            int oldRoomId = selectedBooking.getRoomId();
+            String oldStatus = selectedBooking.getStatus();
+
             selectedBooking.setCustomerId(customer.getCustomerId());
             selectedBooking.setRoomId(room.getRoomId());
             selectedBooking.setCheckinDate(checkIn);
@@ -401,12 +437,53 @@ public class BookingController {
             selectedBooking.setStatus(status);
 
             if (BookingDAO.updateBooking(selectedBooking)) {
+                // Handle room status changes
+                handleRoomStatusChange(oldRoomId, room.getRoomId(), oldStatus, status);
+
                 showAlert(Alert.AlertType.INFORMATION, "Success", "Booking updated successfully!");
+                // Clear dirty state FIRST, then set flag for safety
+
+                isLoading = true;
                 isDirty = false;
+                selectedBooking = null;
+                // Clear table selection to trigger listener
+                tblBooking.getSelectionModel().clearSelection();
+                // Reset form to clear dirty state
+                handleReset(null);
                 loadBookings();
+                // Refresh room list to reflect status changes
+                loadRooms(dpCheckinDate.getValue(), dpCheckoutDate.getValue());
+                isLoading = false;
             } else {
                 showAlert(Alert.AlertType.ERROR, "Error", "Failed to update booking.");
             }
+        }
+    }
+
+    /**
+     * Handle room status changes based on booking status
+     */
+    private void handleRoomStatusChange(int oldRoomId, int newRoomId, String oldStatus, String newStatus) {
+        // If booking is cancelled, make room available
+        if ("Cancelled".equals(newStatus)) {
+            RoomDAO.updateRoomStatus(newRoomId, "Available");
+            return;
+        }
+
+        // If status changed from non-Confirmed to Confirmed
+        if (!"Confirmed".equals(oldStatus) && "Confirmed".equals(newStatus)) {
+            RoomDAO.updateRoomStatus(newRoomId, "Occupied");
+        }
+
+        // If status changed from Confirmed to non-Confirmed
+        if ("Confirmed".equals(oldStatus) && !"Confirmed".equals(newStatus)) {
+            RoomDAO.updateRoomStatus(oldRoomId, "Available");
+        }
+
+        // If room changed and new booking is Confirmed
+        if (oldRoomId != newRoomId && "Confirmed".equals(newStatus)) {
+            RoomDAO.updateRoomStatus(oldRoomId, "Available");
+            RoomDAO.updateRoomStatus(newRoomId, "Occupied");
         }
     }
 
@@ -437,22 +514,10 @@ public class BookingController {
         }
     }
 
-    /**
-     * Called when the user clicks on the empty area of the "New / Edit Booking" pane.
-     * Currently disabled - clicking empty area will NOT reset the form.
-     * If you want to enable reset, uncomment the code below.
-     */
     @FXML
     private void handlePaneClick(MouseEvent event) {
-        // Click on empty area no longer triggers reset
-        // Uncomment below to re-enable reset functionality:
-        // handleReset(null);
     }
 
-    /**
-     * Reset form to "new booking" state.
-     * Uses isLoading to suppress dirty-marking during reset.
-     */
     @FXML
     private void handleReset(ActionEvent event) {
         isLoading = true;
@@ -460,7 +525,8 @@ public class BookingController {
             selectedBooking = null;
             isDirty = false;
 
-            if (!cboCustomer.getItems().isEmpty()) cboCustomer.setValue(cboCustomer.getItems().get(0));
+            if (!cboCustomer.getItems().isEmpty())
+                cboCustomer.setValue(cboCustomer.getItems().get(0));
             dpCheckinDate.setValue(LocalDate.now());
             dpCheckoutDate.setValue(LocalDate.now().plusDays(1));
             cboStatus.setValue("Pending");
@@ -479,13 +545,67 @@ public class BookingController {
 
     // ─── Filter Handlers ─────────────────────────────────────────────────────────
 
-    @FXML private void handleShowAll(ActionEvent event)       { loadBookings(); }
-    @FXML private void handleShowConfirmed(ActionEvent event) { filterByStatus("Confirmed"); }
-    @FXML private void handleShowPending(ActionEvent event)   { filterByStatus("Pending"); }
-    @FXML private void handleShowCancelled(ActionEvent event) { filterByStatus("Cancelled"); }
+    @FXML
+    private void handleShowAll(ActionEvent event) {
+        loadBookings();
+    }
+
+    @FXML
+    private void handleShowConfirmed(ActionEvent event) {
+        filterByStatus("Confirmed");
+    }
+
+    @FXML
+    private void handleShowPending(ActionEvent event) {
+        filterByStatus("Pending");
+    }
+
+    @FXML
+    private void handleShowCancelled(ActionEvent event) {
+        filterByStatus("Cancelled");
+    }
 
     private void filterByStatus(String status) {
         tblBooking.setItems(FXCollections.observableArrayList(BookingDAO.getBookingsByStatus(status)));
+    }
+
+    // ─── Search Handlers ─────────────────────────────────────────────────────────
+
+    /**
+     * Search bookings by customer name and/or date range.
+     */
+    @FXML
+    private void handleSearch(ActionEvent event) {
+        String customerName = txtSearchCustomer.getText();
+        LocalDate checkinDate = dpSearchCheckin.getValue();
+        LocalDate checkoutDate = dpSearchCheckout.getValue();
+
+        // If all fields are empty, show all bookings
+        if ((customerName == null || customerName.trim().isEmpty())
+                && checkinDate == null && checkoutDate == null) {
+            loadBookings();
+            showAlert(Alert.AlertType.INFORMATION, "Search", "Showing all bookings.\nEnter search criteria to filter.");
+            return;
+        }
+
+        List<Booking> results = BookingDAO.searchBookings(customerName, checkinDate, checkoutDate);
+        bookingList = FXCollections.observableArrayList(results);
+        tblBooking.setItems(bookingList);
+
+        if (results.isEmpty()) {
+            showAlert(Alert.AlertType.INFORMATION, "Search Results", "No bookings found matching your criteria.");
+        }
+    }
+
+    /**
+     * Clear search filters and show all bookings.
+     */
+    @FXML
+    private void handleClearSearch(ActionEvent event) {
+        txtSearchCustomer.clear();
+        dpSearchCheckin.setValue(null);
+        dpSearchCheckout.setValue(null);
+        loadBookings();
     }
 
     // ─── Export CSV ──────────────────────────────────────────────────────────────
@@ -496,15 +616,16 @@ public class BookingController {
         fc.setTitle("Save CSV File");
         fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
         java.io.File file = fc.showSaveDialog(null);
-        if (file == null) return;
+        if (file == null)
+            return;
 
         try (FileWriter writer = new FileWriter(file, java.nio.charset.StandardCharsets.UTF_8)) {
             writer.write('\ufeff'); // BOM for Excel
             writer.write("Booking ID,Customer,Room,Check-in,Check-out,Total Price,Status\n");
             for (Booking b : BookingDAO.getAllBookings()) {
                 writer.write(String.format("%d,\"%s\",%s,%s,%s,%.0f,%s\n",
-                    b.getBookingId(), b.getCustomerName(), b.getRoomNumber(),
-                    b.getCheckinDate(), b.getCheckoutDate(), b.getTotalPrice(), b.getStatus()));
+                        b.getBookingId(), b.getCustomerName(), b.getRoomNumber(),
+                        b.getCheckinDate(), b.getCheckoutDate(), b.getTotalPrice(), b.getStatus()));
             }
             showAlert(Alert.AlertType.INFORMATION, "Export Successful", "CSV saved to: " + file.getName());
         } catch (IOException e) {

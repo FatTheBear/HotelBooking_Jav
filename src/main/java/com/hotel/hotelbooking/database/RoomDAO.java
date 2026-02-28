@@ -90,4 +90,25 @@ public class RoomDAO {
         }
         return null;
     }
+    
+    /**
+     * Update room status
+     * @param roomId the room ID
+     * @param status the new status (Available, Occupied, Maintenance)
+     * @return true if successful
+     */
+    public static boolean updateRoomStatus(int roomId, String status) {
+        String query = "UPDATE rooms SET status = ? WHERE room_id = ?";
+        
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            
+            pstmt.setString(1, status);
+            pstmt.setInt(2, roomId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }

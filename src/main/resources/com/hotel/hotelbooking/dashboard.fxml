@@ -50,6 +50,13 @@
                     prefWidth="175"
                     prefHeight="35"/>
 
+            <Button fx:id="btnChatBot"
+                    text="ChatBot"
+                    onAction="#handleChatBot"
+                    prefWidth="100"
+                    prefHeight="35"
+                    style="-fx-background-color: #27ae60; -fx-text-fill: white;"/>
+
             <!-- Spacer -->
             <Region HBox.hgrow="ALWAYS"/>
 

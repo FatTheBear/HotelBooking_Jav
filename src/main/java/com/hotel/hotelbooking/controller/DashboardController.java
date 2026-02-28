@@ -29,6 +29,9 @@ public class DashboardController {
     private Button btnBookings;
     
     @FXML
+    private Button btnChatBot;
+    
+    @FXML
     private Button btnExit;
     
     @FXML
@@ -73,6 +76,16 @@ public class DashboardController {
         } catch (java.io.IOException e) {
             e.printStackTrace();
             showAlert("Error", "Failed to open Bookings module: " + e.getMessage());
+        }
+    }
+    
+    @FXML
+    private void handleChatBot(ActionEvent event) {
+        try {
+            com.hotel.hotelbooking.App.setRoot("chatbot");
+        } catch (java.io.IOException e) {
+            e.printStackTrace();
+            showAlert("Error", "Failed to open ChatBot: " + e.getMessage());
         }
     }
     

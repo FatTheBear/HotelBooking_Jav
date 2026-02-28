@@ -23,6 +23,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BookingController {
 
@@ -135,10 +137,14 @@ public class BookingController {
     // ─────────────────────────────────────────────────────────────
 
     private void loadCustomers() {
-        List<Customer> customers = CustomerDAO.getAllCustomers();
-        cboCustomer.setItems(FXCollections.observableArrayList(customers));
-        if (!customers.isEmpty()) {
-            cboCustomer.setValue(customers.get(0));
+        try {
+            List<Customer> customers = CustomerDAO.getAllCustomers();
+            cboCustomer.setItems(FXCollections.observableArrayList(customers));
+            if (!customers.isEmpty()) {
+                cboCustomer.setValue(customers.get(0));
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(BookingController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

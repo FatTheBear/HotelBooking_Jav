@@ -1,7 +1,6 @@
 package com.hotel.hotelbooking.controller;
-
+import com.hotel.hotelbooking.database.CustomerDAO;
 import com.hotel.hotelbooking.model.Customer;
-import com.hotel.hotelbooking.dao.CustomerDAO;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -207,7 +206,7 @@ public class CustomerController {
     private void loadCustomers() {
         try {
             customerList.clear();
-            customerList.addAll(CustomerDAO.getAll());
+            customerList.addAll(CustomerDAO.getAllCustomers());
         } catch (Exception e) {
             e.printStackTrace();
             showError("Error loading customer data!");

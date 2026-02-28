@@ -1,0 +1,38 @@
+.root {
+    -fx-background-color: #f4f7f6;
+}
+
+/* Tùy chỉnh thanh cuộn */
+.chat-scroll-pane {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-border-color: #ddd;
+    -fx-border-radius: 5px;
+}
+
+/* Bong bóng chat của người dùng */
+.user-msg {
+    -fx-background-color: #0084ff;
+    -fx-text-fill: white;
+    -fx-padding: 8 12;
+    -fx-background-radius: 15 15 2 15;
+    -fx-max-width: 250px;
+    -fx-alignment: center-right;
+}
+
+/* Bong bóng chat của Bot */
+.bot-msg {
+    -fx-background-color: #e4e6eb;
+    -fx-text-fill: #050505;
+    -fx-padding: 8 12;
+    -fx-background-radius: 15 15 15 2;
+    -fx-max-width: 250px;
+}
+
+/* Nút gửi */
+.send-button {
+    -fx-background-color: #0084ff;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}

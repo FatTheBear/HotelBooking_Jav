@@ -21,7 +21,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-
+import javafx.scene.control.Alert;
 /**
  * RoomController (Room Management screen)
  *
@@ -194,7 +194,9 @@ public class RoomController implements Initializable {
         btnUpdate.setDisable(true);
         btnDelete.setDisable(true);
 
-        lblHint.setText("Tip: Select a row to edit.");
+        if (lblHint != null) {
+            lblHint.setText("..."); // hoặc ""
+        }
     }
 
     private Room buildRoomFromFormOrNull() {
@@ -260,35 +262,33 @@ private void handleCreate(ActionEvent event) {
         }
 
         Room updated = buildRoomFromFormOrNull();
-        if (updated == null) return;
-
-        // TODO: requires you to implement RoomDAO.updateRoom(updated)
-        // boolean ok = RoomDAO.updateRoom(updated);
-
-        showAlert(Alert.AlertType.INFORMATION, "TODO",
-            "Update is not implemented yet.\nNext step: add RoomDAO.updateRoom(room) method.");
-    }
-
-    @FXML
-    private void handleDelete(ActionEvent event) {
-        if (selectedRoom == null) {
-            showAlert(Alert.AlertType.WARNING, "No Selection", "Please select a room from the table first.");
+        if (updated == null) {
             return;
         }
 
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Confirm Delete");
-        confirm.setHeaderText("Delete Room #" + selectedRoom.getRoomNumber());
-        confirm.setContentText("Are you sure you want to delete this room? This action cannot be undone.");
+        // đảm bảo update đúng record đang chọn
+        updated.setRoomId(selectedRoom.getRoomId());
 
-        Optional<ButtonType> result = confirm.showAndWait();
-        if (result.isEmpty() || result.get() != ButtonType.OK) return;
+        boolean ok = RoomDAO.updateRoom(updated);
 
-        // TODO: requires you to implement RoomDAO.deleteRoom(selectedRoom.getRoomId())
-        // boolean ok = RoomDAO.deleteRoom(selectedRoom.getRoomId());
-
-        showAlert(Alert.AlertType.INFORMATION, "TODO",
-            "Delete is not implemented yet.\nNext step: add RoomDAO.deleteRoom(roomId) method.");
+        if (ok) {
+            showAlert(Alert.AlertType.INFORMATION, "Success", "Room updated successfully.");
+            loadRooms(); // hoặc refreshRooms(), gọi hàm bạn đang dùng để reload TableView
+            // resetFormState(); // optional
+        } else {
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to update room.");
+        }
+    }
+    @FXML
+    private void handleDelete(ActionEvent event) {
+        showAlert(
+                Alert.AlertType.WARNING,
+                "Delete blocked",
+                "Rooms cannot be deleted",
+                "This room cannot be deleted because it may be referenced by bookings and audit/history data.\n"+
+                "Instead, set the room status to \"Maintenance\" (or \"Inactive\") and click Update."
+        );
+        return; // chặn luôn, không xoá gì hết
     }
 
     @FXML
@@ -298,11 +298,21 @@ private void handleCreate(ActionEvent event) {
 
     // ===== Utilities =====
 
-    private void showAlert(Alert.AlertType type, String title, String message) {
+    private void showAlert(Alert.AlertType type, String title, String header, String content) {
         Alert alert = new Alert(type);
         alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
+        alert.setHeaderText(header);
+
+        Label label = new Label(content);
+        label.setWrapText(true);
+        label.setMaxWidth(450);          // tăng/giảm tuỳ bạn
+
+        alert.getDialogPane().setContent(label);
+        alert.getDialogPane().setPrefWidth(520);  // tăng/giảm tuỳ bạn
+
         alert.showAndWait();
+    }
+    private void showAlert(Alert.AlertType type, String title, String content) {
+        showAlert(type, title, null, content);
     }
 }

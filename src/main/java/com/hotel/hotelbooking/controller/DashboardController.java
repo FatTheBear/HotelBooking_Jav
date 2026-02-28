@@ -1,5 +1,7 @@
 package com.hotel.hotelbooking.controller;
 
+import java.io.IOException;
+import java.net.URL;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -15,12 +17,17 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.AnchorPane;
 
 
 public class DashboardController {
     
+    
+    
     @FXML
     private Button btnRooms;
+    
+    @FXML private AnchorPane contentArea;
     
     @FXML
     private Button btnCustomers;
@@ -34,10 +41,7 @@ public class DashboardController {
     @FXML
     private Button btnExit;
     
-    @FXML
-    private void handleRooms(ActionEvent event) {
-        showAlert("Rooms Management", "Room management feature coming soon!\n(Will be implemented by Hop)");
-    }
+    
     @FXML
     private VBox contentBox;
 
@@ -51,6 +55,24 @@ public class DashboardController {
 //    private void handleCustomers(ActionEvent event) {
 //        showAlert("Customers Management", "Customer management feature coming soon!\n(Will be implemented by Sang)");
 //    }
+    @FXML
+    private void handleRooms(ActionEvent event) {
+        System.out.println("Rooms clicked");
+
+        try {
+            URL url = getClass().getResource("/com/hotel/hotelbooking/room.fxml");
+            System.out.println("room.fxml url = " + url);
+
+            Parent view = FXMLLoader.load(url);
+
+            contentBox.getChildren().setAll(view);
+            System.out.println("Room UI loaded OK");
+        } catch (Exception e) {
+            System.out.println("FAILED to load Room UI: " + e);
+            e.printStackTrace();
+        }
+    }
+    
     @FXML
     private void handleCustomers(ActionEvent event) {
         try {
@@ -68,6 +90,7 @@ public class DashboardController {
             e.printStackTrace();
         }
     }
+    
 
     @FXML
     private void handleBookings(ActionEvent event) {
@@ -123,10 +146,10 @@ public class DashboardController {
     };
 
     String[] prices = {
-            "$40 / night",
-            "$60 / night",
-            "$85 / night",
-            "$120 / night"
+            "500.000VND / night",
+            "1.000.000VND / night",
+            "1.500.000VND / night",
+            "2.000.000VND / night"
     };
 
     for (int i = 0; i < 4; i++) {

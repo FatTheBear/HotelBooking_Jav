@@ -193,30 +193,30 @@ public class RoomDAO {
      * @return true if update succeeded
      */
     public static boolean updateRoom(Room room) {
-        String query =
-            "UPDATE rooms " +
-            "SET room_number = ?, room_type = ?, price = ?, capacity = ?, status = ?, description = ? " +
-            "WHERE room_id = ?";
+    String query =
+        "UPDATE rooms " +
+        "SET room_number = ?, room_type = ?, price = ?, capacity = ?, floor = ?, status = ?, description = ? " +
+        "WHERE room_id = ?";
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement pstmt = conn.prepareStatement(query)) {
 
-            pstmt.setString(1, room.getRoomNumber());
-            pstmt.setString(2, room.getRoomType());
-            pstmt.setDouble(3, room.getPrice());
-            pstmt.setInt(4, room.getCapacity());
-            pstmt.setString(5, room.getStatus());
-            pstmt.setString(6, room.getDescription());
-            pstmt.setInt(7, room.getRoomId());
+        pstmt.setString(1, room.getRoomNumber());
+        pstmt.setString(2, room.getRoomType());
+        pstmt.setDouble(3, room.getPrice());
+        pstmt.setInt(4, room.getCapacity());
+        pstmt.setInt(5, room.getFloor());
+        pstmt.setString(6, room.getStatus());
+        pstmt.setString(7, room.getDescription());
+        pstmt.setInt(8, room.getRoomId());
 
-            int rows = pstmt.executeUpdate();
-            return rows > 0;
+        return pstmt.executeUpdate() > 0;
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return false;
-        }
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return false;
     }
+}
 
     /**
      * DELETE: Delete a room by room_id.

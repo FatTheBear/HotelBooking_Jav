@@ -7,7 +7,7 @@ package com.hotel.hotelbooking.model;
  * This represents one row in the `rooms` table.
  * You already added a new DB column: `capacity`,
  * so the model must include it to display/edit it in the Room UI
- * and later validate Booking.num_guests Room.capacity*/
+ * and later validate Booking.s Room.capacity*/
 public class Room {
     private int roomId;
     private String roomNumber;
@@ -16,7 +16,15 @@ public class Room {
 
     // NEW: maximum number of guests allowed in this room
     private int capacity;
+    private int floor;
 
+    public int getFloor() {
+        return floor;
+    }
+
+    public void setFloor(int floor) {
+        this.floor = floor;
+    }
     private String status;
     private String description;
 

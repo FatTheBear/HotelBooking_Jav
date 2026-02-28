@@ -36,3 +36,12 @@
     -fx-font-weight: bold;
     -fx-cursor: hand;
 }
+
+/* Nút Back */
+.back-button {
+    -fx-background-color: #6c757d;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 5 10;
+}

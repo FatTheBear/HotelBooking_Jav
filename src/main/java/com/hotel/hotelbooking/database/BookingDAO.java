@@ -12,14 +12,14 @@ public class BookingDAO {
     // ─── SQL Queries ────────────────────────────────────────────────────────────
 
     private static final String SQL_GET_ALL =
-        "SELECT b.*, c.full_name, r.room_number " +
+        "SELECT b.*, c.full_name, c.phone, r.room_number " +
         "FROM bookings b " +
         "JOIN customers c ON b.customer_id = c.customer_id " +
         "JOIN rooms r ON b.room_id = r.room_id " +
         "ORDER BY b.booking_id DESC";
 
     private static final String SQL_GET_BY_STATUS =
-        "SELECT b.*, c.full_name, r.room_number " +
+        "SELECT b.*, c.full_name, c.phone, r.room_number " +
         "FROM bookings b " +
         "JOIN customers c ON b.customer_id = c.customer_id " +
         "JOIN rooms r ON b.room_id = r.room_id " +
@@ -64,6 +64,28 @@ public class BookingDAO {
         "AND booking_id != ? " +
         "AND NOT (checkout_date <= ? OR checkin_date >= ?)";
 
+    // ─── Search Queries ───────────────────────────────────────────────────────────
+
+    /** Search bookings by customer name, phone and/or date range */
+    private static final String SQL_SEARCH =
+        "SELECT b.*, c.full_name, c.phone, r.room_number " +
+        "FROM bookings b " +
+        "JOIN customers c ON b.customer_id = c.customer_id " +
+        "JOIN rooms r ON b.room_id = r.room_id " +
+        "WHERE (? IS NULL OR c.full_name LIKE ? OR c.phone LIKE ?) " +
+        "AND (? IS NULL OR b.checkin_date >= ?) " +
+        "AND (? IS NULL OR b.checkout_date <= ?) " +
+        "ORDER BY b.booking_id DESC";
+
+    /** Search bookings by phone number */
+    private static final String SQL_SEARCH_BY_PHONE =
+        "SELECT b.*, c.full_name, c.phone, r.room_number " +
+        "FROM bookings b " +
+        "JOIN customers c ON b.customer_id = c.customer_id " +
+        "JOIN rooms r ON b.room_id = r.room_id " +
+        "WHERE c.phone LIKE ? " +
+        "ORDER BY b.booking_id DESC";
+
     // ─── Helpers ─────────────────────────────────────────────────────────────────
 
     /**
@@ -81,6 +103,7 @@ public class BookingDAO {
         );
         booking.setCustomerName(rs.getString("full_name"));
         booking.setRoomNumber(rs.getString("room_number"));
+        booking.setCustomerPhone(rs.getString("phone"));
         return booking;
     }
 
@@ -282,5 +305,78 @@ public class BookingDAO {
         }
 
         return room;
+    }
+
+    // ─── Search Methods ─────────────────────────────────────────────────────────────
+
+    /**
+     * Search bookings by customer name, phone number and/or date range.
+     * @param customerName customer name or phone to search (null = all)
+     * @param checkinDate start date filter (null = no filter)
+     * @param checkoutDate end date filter (null = no filter)
+     */
+    public static List<Booking> searchBookings(String customerName, LocalDate checkinDate, LocalDate checkoutDate) {
+        List<Booking> bookings = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SQL_SEARCH)) {
+
+            String searchPattern = (customerName != null && !customerName.isEmpty()) 
+                ? "%" + customerName + "%" : null;
+            
+            // Parameter 1 & 2: name search, Parameter 3: phone search
+            pstmt.setString(1, searchPattern);
+            pstmt.setString(2, searchPattern);
+            pstmt.setString(3, searchPattern);
+            
+            if (checkinDate != null) {
+                pstmt.setDate(4, Date.valueOf(checkinDate));
+                pstmt.setDate(5, Date.valueOf(checkinDate));
+            } else {
+                pstmt.setNull(4, Types.DATE);
+                pstmt.setNull(5, Types.DATE);
+            }
+            
+            if (checkoutDate != null) {
+                pstmt.setDate(6, Date.valueOf(checkoutDate));
+                pstmt.setDate(7, Date.valueOf(checkoutDate));
+            } else {
+                pstmt.setNull(6, Types.DATE);
+                pstmt.setNull(7, Types.DATE);
+            }
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    bookings.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("searchBookings error: " + e.getMessage());
+        }
+        return bookings;
+    }
+
+    /**
+     * Search bookings by phone number.
+     * @param phoneNumber phone number to search
+     */
+    public static List<Booking> searchBookingsByPhone(String phoneNumber) {
+        List<Booking> bookings = new ArrayList<>();
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            return getAllBookings();
+        }
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(SQL_SEARCH_BY_PHONE)) {
+
+            pstmt.setString(1, "%" + phoneNumber + "%");
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    bookings.add(mapRow(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("searchBookingsByPhone error: " + e.getMessage());
+        }
+        return bookings;
     }
 }

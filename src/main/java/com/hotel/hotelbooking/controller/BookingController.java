@@ -3,6 +3,7 @@ package com.hotel.hotelbooking.controller;
 import com.hotel.hotelbooking.App;
 import com.hotel.hotelbooking.database.BookingDAO;
 import com.hotel.hotelbooking.database.CustomerDAO;
+import com.hotel.hotelbooking.database.RoomDAO;
 import com.hotel.hotelbooking.model.Booking;
 import com.hotel.hotelbooking.model.Customer;
 import com.hotel.hotelbooking.model.Room;
@@ -22,6 +23,8 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class BookingController {
 
@@ -98,10 +101,14 @@ public class BookingController {
     // ─── Data Loading ─────────────────────────────────────────────────────────────
 
     private void loadCustomers() {
-        List<Customer> customers = CustomerDAO.getAllCustomers();
-        cboCustomer.setItems(FXCollections.observableArrayList(customers));
-        if (!customers.isEmpty()) {
-            cboCustomer.setValue(customers.get(0));
+        try {
+            List<Customer> customers = CustomerDAO.getAllCustomers();
+            cboCustomer.setItems(FXCollections.observableArrayList(customers));
+            if (!customers.isEmpty()) {
+                cboCustomer.setValue(customers.get(0));
+            }
+        } catch (Exception ex) {
+            Logger.getLogger(BookingController.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 

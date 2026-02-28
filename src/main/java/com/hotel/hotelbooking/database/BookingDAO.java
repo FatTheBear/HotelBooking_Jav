@@ -261,14 +261,26 @@ public class BookingDAO {
 
     // ─── Private Helpers ─────────────────────────────────────────────────────────
 
+    // ─── Private Helpers ─────────────────────────────────────────────────────────
+
     private static Room mapRoom(ResultSet rs) throws SQLException {
-        return new Room(
-            rs.getInt("room_id"),
-            rs.getString("room_number"),
-            rs.getString("room_type"),
-            rs.getDouble("price"),
-            rs.getString("status"),
-            rs.getString("description")
+        Room room = new Room(
+                rs.getInt("room_id"),
+                rs.getString("room_number"),
+                rs.getString("room_type"),
+                rs.getDouble("price"),
+                rs.getInt("capacity"), // <-- FIX: lấy capacity từ DB
+                rs.getString("status"),
+                rs.getString("description")
         );
+
+        // Optional: nếu bảng rooms có cột floor thì set thêm (không có thì xoá 3 dòng này)
+        try {
+            room.setFloor(rs.getInt("floor"));
+        } catch (SQLException ignored) {
+            // column 'floor' not present in result set -> ignore
+        }
+
+        return room;
     }
 }

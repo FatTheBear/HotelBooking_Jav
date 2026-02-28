@@ -3,6 +3,7 @@ package com.hotel.hotelbooking.controller;
 import com.hotel.hotelbooking.App;
 import com.hotel.hotelbooking.database.BookingDAO;
 import com.hotel.hotelbooking.database.CustomerDAO;
+import com.hotel.hotelbooking.database.RoomDAO;
 import com.hotel.hotelbooking.model.Booking;
 import com.hotel.hotelbooking.model.Customer;
 import com.hotel.hotelbooking.model.Room;

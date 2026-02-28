@@ -14,6 +14,7 @@ public class Booking {
     // For display purposes (optional - to show customer name and room number)
     private String customerName;
     private String roomNumber;
+    private String customerPhone;
     
     // Constructor with all fields
     public Booking(int bookingId, int customerId, int roomId,
@@ -41,6 +42,7 @@ public class Booking {
     public String getStatus() { return status; }
     public String getCustomerName() { return customerName; }
     public String getRoomNumber() { return roomNumber; }
+    public String getCustomerPhone() { return customerPhone; }
     
     // Setters
     public void setBookingId(int bookingId) { this.bookingId = bookingId; }
@@ -52,6 +54,7 @@ public class Booking {
     public void setStatus(String status) { this.status = status; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
+    public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
     
     @Override
     public String toString() {

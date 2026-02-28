@@ -6,7 +6,12 @@
 
 <VBox prefHeight="500.0" prefWidth="400.0" spacing="10" stylesheets="@chatbot.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.hotel.hotelbooking.chatbot.ChatBotController">
     <children>
-        <Label text="Hotel ChatBot - Hỗ trợ đặt phòng" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <children>
+                <Button fx:id="backButton" mnemonicParsing="false" onAction="#handleBack" text="⬅ Back" styleClass="back-button"/>
+                <Label text="Hotel ChatBot - Hỗ trợ đặt phòng" style="-fx-font-size: 18px; -fx-font-weight: bold;"/>
+            </children>
+        </HBox>
         
         <ScrollPane fx:id="scrollPane" fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="chat-scroll-pane">
             <content>

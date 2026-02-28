@@ -121,8 +121,28 @@ public class RoomDAO {
     }
 
     /**
+     * Update room status
+     * @param roomId the room ID
+     * @param status the new status (Available, Occupied, Maintenance)
+     * @return true if successful
+     */
+    public static boolean updateRoomStatus(int roomId, String status) {
+        String query = "UPDATE rooms SET status = ? WHERE room_id = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, status);
+            pstmt.setInt(2, roomId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
      * Helper read: capacity only.
-    
      */
     public static int getCapacityByRoomId(int roomId) {
         String query = "SELECT capacity FROM rooms WHERE room_id = ?";
@@ -143,80 +163,6 @@ public class RoomDAO {
 
         return 0;
     }
-
-    // -------------------------
-    // CREATE / UPDATE / DELETE
-    // -------------------------
-
-    /**
-     * CREATE: Insert a new room.
-     *
-     * @return true if insert succeeded
-     */
-    public static boolean createRoom(Room room) {
-        String query =
-            "INSERT INTO rooms (room_number, room_type, price, capacity, status, description) " +
-            "VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-
-            pstmt.setString(1, room.getRoomNumber());
-            pstmt.setString(2, room.getRoomType());
-            pstmt.setDouble(3, room.getPrice());
-            pstmt.setInt(4, room.getCapacity());
-            pstmt.setString(5, room.getStatus());
-            pstmt.setString(6, room.getDescription());
-
-            int rows = pstmt.executeUpdate();
-            if (rows <= 0) return false;
-
-            // Optional: read generated room_id and set it back into the model
-            try (ResultSet keys = pstmt.getGeneratedKeys()) {
-                if (keys.next()) {
-                    room.setRoomId(keys.getInt(1));
-                }
-            }
-
-            return true;
-
-        } catch (SQLException e) {
-            // Common error here: duplicate room_number if UNIQUE constraint exists
-            e.printStackTrace();
-            return false;
-        }
-    }
-
-    /**
-     * UPDATE: Update an existing room identified by room_id.
-     *
-     * @return true if update succeeded
-     */
-    public static boolean updateRoom(Room room) {
-    String query =
-        "UPDATE rooms " +
-        "SET room_number = ?, room_type = ?, price = ?, capacity = ?, floor = ?, status = ?, description = ? " +
-        "WHERE room_id = ?";
-
-    try (Connection conn = DatabaseConnection.getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(query)) {
-
-        pstmt.setString(1, room.getRoomNumber());
-        pstmt.setString(2, room.getRoomType());
-        pstmt.setDouble(3, room.getPrice());
-        pstmt.setInt(4, room.getCapacity());
-        pstmt.setInt(5, room.getFloor());
-        pstmt.setString(6, room.getStatus());
-        pstmt.setString(7, room.getDescription());
-        pstmt.setInt(8, room.getRoomId());
-
-        return pstmt.executeUpdate() > 0;
-
-    } catch (SQLException e) {
-        e.printStackTrace();
-        return false;
-    }
-}
 
     /**
      * DELETE: Delete a room by room_id.
@@ -244,10 +190,6 @@ public class RoomDAO {
             return false;
         }
     }
-
-    // -------------------------
-    // Optional convenience methods
-    // -------------------------
 
     /**
      * OPTIONAL: "Soft delete" (safer than physical delete).

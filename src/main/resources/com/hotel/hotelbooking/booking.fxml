@@ -142,18 +142,37 @@
                             <Button fx:id="btnShowCancelled"
                                     text="Cancelled"
                                     onAction="#handleShowCancelled" />
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <!-- Search Fields -->
+                            <TextField fx:id="txtSearchCustomer" 
+                                       promptText="Search by customer name..." 
+                                       prefWidth="180"
+                                       onAction="#handleSearch"/>
+                            <DatePicker fx:id="dpSearchCheckin" 
+                                        promptText="Check-in"
+                                        prefWidth="130"/>
+                            <DatePicker fx:id="dpSearchCheckout" 
+                                        promptText="Check-out"
+                                        prefWidth="130"/>
+                            <Button text="🔍 Search" 
+                                    onAction="#handleSearch"
+                                    style="-fx-background-color: #3b82f6; -fx-text-fill: white;"/>
+                            <Button text="Clear" 
+                                    onAction="#handleClearSearch"
+                                    style="-fx-background-color: #6b7280; -fx-text-fill: white;"/>
                         </HBox>
 
                         <!-- Table (no Action column — edit/delete via form above) -->
                         <TableView fx:id="tblBooking" prefHeight="280" VBox.vgrow="ALWAYS">
                             <columns>
                                 <TableColumn fx:id="colBookingId"  text="ID"          minWidth="55"  prefWidth="65" />
-                                <TableColumn fx:id="colCustomer"   text="Customer"    minWidth="130" prefWidth="160" />
-                                <TableColumn fx:id="colRoom"       text="Room"        minWidth="80"  prefWidth="100" />
-                                <TableColumn fx:id="colCheckin"    text="Check-in"    minWidth="100" prefWidth="120" />
-                                <TableColumn fx:id="colCheckout"   text="Check-out"   minWidth="100" prefWidth="120" />
-                                <TableColumn fx:id="colTotalPrice" text="Total Price" minWidth="110" prefWidth="130" />
-                                <TableColumn fx:id="colStatus"     text="Status"      minWidth="100" prefWidth="120" />
+                                <TableColumn fx:id="colCustomer"   text="Customer"    minWidth="130" prefWidth="140" />
+                                <TableColumn fx:id="colPhone"     text="Phone"      minWidth="100" prefWidth="110" />
+                                <TableColumn fx:id="colRoom"       text="Room"        minWidth="80"  prefWidth="90" />
+                                <TableColumn fx:id="colCheckin"    text="Check-in"    minWidth="100" prefWidth="110" />
+                                <TableColumn fx:id="colCheckout"   text="Check-out"   minWidth="100" prefWidth="110" />
+                                <TableColumn fx:id="colTotalPrice" text="Total Price" minWidth="100" prefWidth="110" />
+                                <TableColumn fx:id="colStatus"     text="Status"      minWidth="80"  prefWidth="90" />
                             </columns>
                             <placeholder>
                                 <Label text="No bookings found." style="-fx-text-fill: #6b7280;" />
